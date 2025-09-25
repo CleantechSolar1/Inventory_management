@@ -21,7 +21,7 @@ class Inventory(db.Model):
     __tablename__ = 'inventory'
 
     id = db.Column(db.Integer, primary_key=True)
-    asset_tag = db.Column(db.String(100), nullable=False, index=True)
+    asset_tag = db.Column(db.String(100), nullable=False, unique=True, index=True)
     asset_type = db.Column(db.String(100), nullable=False)
     status = db.Column(db.String(100), nullable=False)
     brand = db.Column(db.String(100), nullable=False)
