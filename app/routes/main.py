@@ -176,8 +176,29 @@ def add_item():
             asset_type_code = ASSET_TYPE_CODES.get(form.asset_type.data, 'XX')
             brand_code = BRAND_CODES.get(form.brand.data, 'XXX')
 
-            asset_type_count = Inventory.query.filter_by(asset_type=form.asset_type.data).count()
-            serial_suffix = f"{asset_type_count + 1:04d}"
+            # Get the last numeric suffix used for this asset type
+            last_asset = (
+                Inventory.query
+                .filter_by(asset_type=form.asset_type.data)
+                .order_by(Inventory.id.desc())  # or order_by asset_tag if more appropriate
+                .first()
+            )
+
+            # Extract numeric suffix
+            START_NUMBER = 485  # fallback start number if no previous asset exists
+            if last_asset:
+                # Get last 4 digits of asset_tag
+                try:
+                    last_suffix = int(last_asset.asset_tag[-4:])
+                except Exception:
+                    last_suffix = START_NUMBER
+            else:
+                last_suffix = START_NUMBER
+
+            # Next suffix
+            next_suffix = last_suffix + 1
+            serial_suffix = f"{next_suffix:04d}"
+
             generated_asset_tag = f"{country_code}{asset_type_code}{brand_code}{serial_suffix}"
 
             # === Depreciation calculation ===
