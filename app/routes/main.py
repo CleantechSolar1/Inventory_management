@@ -3,8 +3,8 @@ import csv
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, Response
 from flask_login import login_required, current_user
 from app import db
-from app.models import Inventory, Log, User
-from app.forms import InventoryForm
+from app.models import Inventory, Log, User, Repair
+from app.forms import InventoryForm, RepairForm
 from datetime import datetime, timedelta
 from flask import render_template, redirect, url_for, request, flash
 from app.forms import ResetPasswordForm  # Create this form as needed
@@ -949,3 +949,101 @@ def inject_notification_count():
     ).count()
 
     return dict(expiring_assets_count=expiring_assets_count)
+
+from sqlalchemy.exc import IntegrityError
+
+@main.route('/repairs', methods=['GET', 'POST'])
+@login_required
+def repairs():
+    form = RepairForm()
+    if form.validate_on_submit():
+        new_repair = Repair(
+            asset_tag=form.asset_tag.data,
+            serial_number=form.serial_number.data,
+            brand=form.brand.data,
+            model=form.model.data,
+            part=form.part.data,
+            issue_description=form.issue_description.data
+        )
+        db.session.add(new_repair)
+        try:
+            db.session.commit()
+            flash('Repair record added successfully!', 'success')
+        except IntegrityError:
+            db.session.rollback()
+            flash('A repair record for this laptop already exists!', 'warning')
+
+    repairs_list = Repair.query.all()
+    return render_template('repairs.html', form=form, repairs=repairs_list)
+
+@main.route('/repairs/edit/<int:repair_id>', methods=['GET', 'POST'])
+@login_required
+def edit_repair(repair_id):
+    repair = Repair.query.get_or_404(repair_id)
+    form = RepairForm(obj=repair)  # Pre-fill with current values
+
+    if form.validate_on_submit():
+        repair.asset_tag = form.asset_tag.data
+        repair.serial_number = form.serial_number.data
+        repair.brand = form.brand.data
+        repair.model = form.model.data
+        repair.part = form.part.data
+        repair.issue_description = form.issue_description.data
+
+        try:
+            db.session.commit()
+            flash('Repair record updated successfully!', 'success')
+            return redirect(url_for('main.repairs'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating record: {str(e)}', 'danger')
+
+    return render_template('edit_repair.html', form=form, repair=repair)
+
+
+@main.route('/repairs/delete/<int:repair_id>', methods=['POST'])
+@login_required
+def delete_repair(repair_id):
+    repair = Repair.query.get_or_404(repair_id)
+    db.session.delete(repair)
+    db.session.commit()
+    flash('Repair record deleted!', 'success')
+    return redirect(url_for('main.repairs'))
+
+import csv
+from io import StringIO
+from flask import Response
+
+@main.route('/repairs/export', methods=['GET'])
+@login_required
+def export_repairs_csv():
+    # Query all repair records
+    repairs = Repair.query.all()
+
+    # Create an in-memory file
+    si = StringIO()
+    writer = csv.writer(si)
+
+    # Write CSV header
+    writer.writerow([
+        "ID", "Asset Tag", "Serial Number", "Brand", "Model",
+        "Part", "Issue", "Created At"
+    ])
+
+    # Write rows
+    for r in repairs:
+        writer.writerow([
+            r.id,
+            r.asset_tag,
+            r.serial_number,
+            r.brand,
+            r.model,
+            r.part,
+            r.issue_description,
+            r.created_at.strftime("%Y-%m-%d %H:%M:%S") if r.created_at else ""
+        ])
+
+    # Prepare response
+    output = Response(si.getvalue(), mimetype="text/csv")
+    output.headers["Content-Disposition"] = "attachment; filename=repair_logs.csv"
+    return output
