@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Edit Repair Record</h2>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        
+        <div class="mb-3">
+            {{ form.asset_tag.label(class="form-label") }}
+            {{ form.asset_tag(class="form-control") }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.serial_number.label(class="form-label") }}
+            {{ form.serial_number(class="form-control") }}
+        </div>
+<div class="form-group">
+    {{ form.brand.label(class="form-label") }} 
+    {{ form.brand(class="form-control") }}
+</div>
+<div class="form-group">
+    {{ form.model.label(class="form-label") }} 
+    {{ form.model(class="form-control") }}
+</div>
+<div class="form-group">
+    {{ form.part.label(class="form-label") }} 
+    {{ form.part(class="form-control") }}
+</div>
+        <div class="mb-3">
+            {{ form.issue_description.label(class="form-label") }}
+            {{ form.issue_description(class="form-control") }}
+        </div>
+
+        <button type="submit" class="btn btn-primary">Update</button>
+        <a href="{{ url_for('main.repairs') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}
