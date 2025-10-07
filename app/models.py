@@ -89,3 +89,15 @@ class LicenseDetails(db.Model):
     purchase_date = db.Column(db.Date, nullable=False)
     expiry_date = db.Column(db.Date, nullable=False)
     remarks = db.Column(db.String(255), nullable=True)
+
+
+class Repair(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    asset_tag = db.Column(db.String(100), nullable=False, unique=True, index=True)
+    serial_number = db.Column(db.String(100), nullable=False, unique=True)
+    brand = db.Column(db.String(100), nullable=False)
+    model = db.Column(db.String(100), nullable=False)
+    part = db.Column(db.String(100), nullable=False)
+    issue_description = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
