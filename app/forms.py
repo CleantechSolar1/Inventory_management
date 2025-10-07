@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, DateField, TextAreaField, IntegerField, SelectField, HiddenField, DecimalField
-from wtforms.validators import DataRequired, Length, EqualTo, ValidationError
+from wtforms.validators import DataRequired, Length, EqualTo, ValidationError, Optional
 from app.models import User
 
 class LoginForm(FlaskForm):
@@ -42,13 +42,16 @@ class RegistrationForm(FlaskForm):
         user = User.query.filter_by(username=username.data).first()
         if user:
             raise ValidationError('That username is taken. Please choose a different one.')
-        
-        
-from flask_wtf import FlaskForm
-from wtforms import PasswordField, SubmitField
-from wtforms.validators import DataRequired, Length
 
 class ResetPasswordForm(FlaskForm):
     new_password = PasswordField('New Password', validators=[DataRequired(), Length(min=6)])
     submit = SubmitField('Reset Password')
 
+class RepairForm(FlaskForm):
+    asset_tag = StringField('Asset Tag', validators=[DataRequired()])
+    serial_number = StringField('Serial Number', validators=[DataRequired()])
+    brand = StringField('Brand', validators=[DataRequired()])
+    model = StringField('Model', validators=[DataRequired()])
+    part = StringField('Part', validators=[DataRequired()])
+    issue_description = TextAreaField('Issue Description', validators=[Optional()])
+    submit = SubmitField('Submit')
