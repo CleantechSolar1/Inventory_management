@@ -54,4 +54,13 @@ class RepairForm(FlaskForm):
     model = StringField('Model', validators=[DataRequired()])
     part = StringField('Part', validators=[DataRequired()])
     issue_description = TextAreaField('Issue Description', validators=[Optional()])
+
+    repair_date = DateField('Repair Date', format='%Y-%m-%d', validators=[Optional()])
+    registered_date = DateField('Registered Date', format='%Y-%m-%d', validators=[Optional()])
+    repaired_under_warranty = SelectField(
+        'Repaired Under Warranty',
+        choices=[('Yes', 'Yes'), ('No', 'No')],
+        validators=[Optional()]
+    )
+
     submit = SubmitField('Submit')
