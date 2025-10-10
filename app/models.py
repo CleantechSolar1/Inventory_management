@@ -99,5 +99,8 @@ class Repair(db.Model):
     model = db.Column(db.String(100), nullable=False)
     part = db.Column(db.String(100), nullable=False)
     issue_description = db.Column(db.Text, nullable=True)
+    repair_date = db.Column(db.Date)
+    registered_date = db.Column(db.Date, default=datetime.utcnow)
+    repaired_under_warranty = db.Column(db.String(10))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
