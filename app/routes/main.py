@@ -1,4 +1,5 @@
 import io
+from io import StringIO
 import csv
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, Response
 from flask_login import login_required, current_user
@@ -17,6 +18,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 from app.models import License, LicenseDetails, db
 from datetime import datetime
+from sqlalchemy.exc import IntegrityError
 
 # Define the main Blueprint
 main = Blueprint('main', __name__)
@@ -963,8 +965,12 @@ def repairs():
             brand=form.brand.data,
             model=form.model.data,
             part=form.part.data,
-            issue_description=form.issue_description.data
+            issue_description=form.issue_description.data,
+            repair_date=form.repair_date.data,
+            registered_date=form.registered_date.data or datetime.utcnow().date(),
+            repaired_under_warranty=form.repaired_under_warranty.data
         )
+
         db.session.add(new_repair)
         try:
             db.session.commit()
@@ -989,6 +995,9 @@ def edit_repair(repair_id):
         repair.model = form.model.data
         repair.part = form.part.data
         repair.issue_description = form.issue_description.data
+        repair.repair_date = form.repair_date.data
+        repair.registered_date = form.registered_date.data
+        repair.repaired_under_warranty = form.repaired_under_warranty.data
 
         try:
             db.session.commit()
@@ -1010,10 +1019,6 @@ def delete_repair(repair_id):
     flash('Repair record deleted!', 'success')
     return redirect(url_for('main.repairs'))
 
-import csv
-from io import StringIO
-from flask import Response
-
 @main.route('/repairs/export', methods=['GET'])
 @login_required
 def export_repairs_csv():
@@ -1027,7 +1032,8 @@ def export_repairs_csv():
     # Write CSV header
     writer.writerow([
         "ID", "Asset Tag", "Serial Number", "Brand", "Model",
-        "Part", "Issue", "Created At"
+        "Part", "Issue", "Repair Date", "Registered Date",
+        "Repaired Under Warranty", "Created At"
     ])
 
     # Write rows
@@ -1040,6 +1046,9 @@ def export_repairs_csv():
             r.model,
             r.part,
             r.issue_description,
+            r.repair_date.strftime("%Y-%m-%d") if r.repair_date else "",
+            r.registered_date.strftime("%Y-%m-%d") if r.registered_date else "",
+            r.repaired_under_warranty or "",
             r.created_at.strftime("%Y-%m-%d %H:%M:%S") if r.created_at else ""
         ])
 
