@@ -31,6 +31,22 @@
             {{ form.issue_description(class="form-control") }}
         </div>
 
+<div class="form-group">
+    {{ form.registered_date.label(class="form-label") }}<br>
+    {{ form.registered_date(class="form-control") }}
+</div>
+
+<div class="form-group">
+    {{ form.repair_date.label(class="form-label") }}<br>
+    {{ form.repair_date(class="form-control") }}
+</div>
+
+<div class="form-group">
+    {{ form.repaired_under_warranty.label(class="form-label") }}<br>
+    {{ form.repaired_under_warranty(class="form-control") }}
+</div>
+
+
         <button type="submit" class="btn btn-primary">Update</button>
         <a href="{{ url_for('main.repairs') }}" class="btn btn-secondary">Cancel</a>
     </form>

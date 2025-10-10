@@ -26,6 +26,24 @@
         <div class="form-group">
             {{ form.issue_description.label }} {{ form.issue_description(class="form-control") }}
         </div>
+
+
+
+<div class="form-group">
+    {{ form.registered_date.label }}<br>
+    {{ form.registered_date(class="form-control") }}
+</div>
+
+<div class="form-group">
+    {{ form.repair_date.label }}<br>
+    {{ form.repair_date(class="form-control") }}
+</div>
+
+<div class="form-group">
+    {{ form.repaired_under_warranty.label }}<br>
+    {{ form.repaired_under_warranty(class="form-control") }}
+</div>
+
         <button type="submit" class="btn btn-primary">Add Repair</button>
     </form>
 
@@ -40,6 +58,9 @@
                 <th>Model</th>
                 <th>Part</th>
                 <th>Issue</th>
+                <th>Registered Date</th>
+                <th>Repair Date</th>
+                <th>Repair Under Warranty</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -52,6 +73,9 @@
                 <td>{{ repair.model }}</td>
                 <td>{{ repair.part }}</td>
                 <td>{{ repair.issue_description }}</td>
+                <td>{{ repair.registered_date or '-' }}</td>
+                <td>{{ repair.repair_date or '-' }}</td>
+                <td>{{ repair.repaired_under_warranty or '-' }}</td>
                 <td>
                     <a href="{{ url_for('main.edit_repair', repair_id=repair.id) }}" class="btn btn-warning btn-sm">Edit</a>
                     <form method="POST" action="{{ url_for('main.delete_repair', repair_id=repair.id) }}" style="display:inline;">
