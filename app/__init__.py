@@ -45,6 +45,10 @@ def _ensure_user_role_column():
             db.session.execute(text(
                 "ALTER TABLE `user` ADD COLUMN role VARCHAR(64) NOT NULL DEFAULT 'normal_user'"
             ))
+        elif db.engine.dialect.name == 'postgresql':
+            db.session.execute(text(
+                "ALTER TABLE \"user\" ADD COLUMN role VARCHAR(64) NOT NULL DEFAULT 'normal_user'"
+            ))
         elif db.engine.dialect.name == 'sqlite':
             db.session.execute(text(
                 "ALTER TABLE user ADD COLUMN role VARCHAR(64) DEFAULT 'normal_user'"
@@ -62,10 +66,10 @@ def _ensure_user_role_column():
         ))
     else:
         db.session.execute(text(
-            "UPDATE user SET role='normal_user' WHERE role IS NULL OR TRIM(role)=''"
+            "UPDATE \"user\" SET role='normal_user' WHERE role IS NULL OR TRIM(role)=''"
         ))
         db.session.execute(text(
-            "UPDATE user SET role='full_control' WHERE username='Admin'"
+            "UPDATE \"user\" SET role='full_control' WHERE username='Admin'"
         ))
     db.session.commit()
 
