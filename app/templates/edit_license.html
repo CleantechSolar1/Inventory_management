@@ -21,8 +21,20 @@
                     <input type="text" class="form-control" name="type" value="{{ license.type }}" required>
                 </div>
                 <div class="mb-3">
-                    <label for="quantity" class="form-label">Quantity:</label>
-                    <input type="number" class="form-control" name="quantity" value="{{ license.quantity }}" required>
+                    <label for="purchase_date" class="form-label">Purchase Date:</label>
+                    <input type="date" class="form-control" name="purchase_date" value="{{ license.purchase_date }}">
+                </div>
+                <div class="mb-3">
+                    <label for="expiry_date" class="form-label">Expiry Date:</label>
+                    <input type="date" class="form-control" name="expiry_date" value="{{ license.expiry_date }}">
+                </div>
+                <div class="mb-3">
+                    <label for="amount_per_unit" class="form-label">Amount Per Unit:</label>
+                    <input type="number" step="0.01" class="form-control" name="amount_per_unit" value="{{ license.amount_per_unit }}">
+                </div>
+                <div class="mb-3">
+                    <label for="total_license" class="form-label">Total Licenses:</label>
+                    <input type="number" class="form-control" name="total_license" value="{{ license.total_license if license.total_license is not none else license.quantity }}" required>
                 </div>
                 <button type="submit" class="btn btn-primary w-100">Save Changes</button>
             </form>

@@ -126,7 +126,7 @@
         <label for="vendor_location">Vendor Location</label>
         {{ form.vendor_location(class_="form-control") }}
 
-        {% if current_user.username == 'Admin' %}
+        {% if current_user.is_elevated %}
             <label for="model">Model</label>
             {{ form.model(class_="form-control") }}
 

@@ -59,21 +59,9 @@
     {{ form.purchase_amount(class="form-control") }}
 </div>
 
-
         <div class="form-group">
             {{ form.age.label(class="form-label") }}
             {{ form.age(class_="form-control") }}
-        </div>
-
-
-        <div class="form-group">
-            {{ form.current_owner.label(class="form-label") }}
-            {{ form.current_owner(class_="form-control") }}
-        </div>
-
-        <div class="form-group">
-            {{ form.previous_owner.label(class="form-label") }}
-            {{ form.previous_owner(class_="form-control") }}
         </div>
 
         <div class="form-group">
@@ -112,4 +100,5 @@
         
         <a href="{{ url_for('main.home') }}" class="btn btn-secondary">Back</a>
     </form>
+
 {% endblock %}

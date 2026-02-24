@@ -1,33 +1,78 @@
 {% extends "base.html" %}
 {% block content %}
+<style>
+    .asset-actions {
+        min-width: 220px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .asset-actions-row {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .asset-actions-row .btn {
+        min-width: 88px;
+    }
+
+    .asset-actions .assign-form {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .asset-actions .assign-input {
+        min-width: 130px;
+        flex: 1 1 130px;
+    }
+</style>
 <div class="container my-4">
     <h1 class="mb-4">Assets</h1>
     <p>Welcome, <strong>{{ current_user.username }}</strong>!</p>
 
-    <div class="mb-4">
-        {% if current_user.username == 'Admin' %}
+    <div class="mb-4 home-action-bar">
+        {% if current_user.is_elevated %}
+        {% if current_user.can_add_users %}
         <a href="{{ url_for('main.add_user') }}" class="btn btn-secondary me-2">Add User</a>
+        <a href="{{ url_for('main.manage_pre_users') }}" class="btn btn-info">Manage Pre-Users</a>
+        {% endif %}
+        {% if current_user.can_manage_users %}
         <a href="{{ url_for('main.view_users') }}" class="btn btn-info">View Users</a>
+        {% endif %}
         <a href="{{ url_for('main.view_logs') }}" class="btn btn-secondary me-2">View Logs</a>
+        {% if current_user.can_add_items %}
         <a href="{{ url_for('main.add_item') }}" class="btn btn-primary">Add New Asset</a>
+        {% endif %}
         <a href="{{ url_for('main.export_csv') }}" class="btn btn-success">Export as CSV</a>
+        {% if current_user.can_import_items %}
         <a href="{{ url_for('main.import_csv') }}" class="btn btn-success">Import CSV</a>
+        {% endif %}
         <a href="{{ url_for('main.device_count') }}" class="btn btn-info">Device Count</a>
         <a href="{{ url_for('main.licenses') }}" class="btn btn-warning">Licenses</a>
-        <a href="{{ url_for('main.repairs') }}" class="btn btn-warning">Repairs</a>
+        <a href="{{ url_for('main.domains') }}" class="btn btn-warning">Domains</a>
+        <a href="{{ url_for('main.expenses') }}" class="btn btn-warning">Expenses</a>
 
 
         <!-- Delete All Button for Admin -->
+        {% if current_user.can_delete_items %}
         <form action="{{ url_for('main.delete_all_items') }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete all items from this Inventory, items once deleted will never get recall from any server?');">
             <button type="submit" class="btn btn-danger">Delete All</button>
         </form>
+        {% endif %}
         {% else %}
+        {% if current_user.can_add_items %}
         <a href="{{ url_for('main.add_item') }}" class="btn btn-primary">Add New Asset</a>
+        {% endif %}
         <a href="{{ url_for('main.export_csv') }}" class="btn btn-success">Export as CSV</a>
         <a href="{{ url_for('main.view_logs') }}" class="btn btn-secondary me-2">View Logs</a>
         <a href="{{ url_for('main.device_count') }}" class="btn btn-info">Device Count</a>
         <a href="{{ url_for('main.licenses') }}" class="btn btn-warning">Licenses</a>
-        <a href="{{ url_for('main.repairs') }}" class="btn btn-warning">Repairs</a>
+        <a href="{{ url_for('main.domains') }}" class="btn btn-warning">Domains</a>
+        <a href="{{ url_for('main.expenses') }}" class="btn btn-warning">Expenses</a>
         {% endif %}
     </div>
 
@@ -171,7 +216,6 @@
                     <th>Purchase Date</th>
                     <th>Purchase Amount (In USD)</th>
                     <th>Age</th>
-                    <th>Depreciated Value (In USD)</th>
                     <th>Current Owner</th>
                     <th>Previous Owner</th>
                     <th>Warranty End Date</th>
@@ -198,7 +242,6 @@
                     <td>{{ item.purchase_date.strftime('%Y-%m-%d') }}</td>
                     <td>{{ item.purchase_amount }}</td>
                     <td>{{ item.age }}</td>
-                    <td>{{ item.depreciated_value }}</td>
                     <td>{{ item.current_owner }}</td>
                     <td>{{ item.previous_owner }}</td>
                     <td>{{ item.warranty_end_date.strftime('%Y-%m-%d') if item.warranty_end_date else 'N/A' }}</td>
@@ -209,12 +252,28 @@
                     <td>{{ item.vendor_location }}</td>
                     <td>{{ item.updated_by }}</td>
                     <td>
-                        <a href="{{ url_for('main.edit_item', item_id=item.id) }}" class="btn btn-warning btn-sm">Edit</a>
-                        {% if current_user.username == 'Admin' %}
-                        <form action="{{ url_for('main.delete_item', item_id=item.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this item?');">
-                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                        </form>
-                        {% endif %}
+                        <div class="asset-actions">
+                            <div class="asset-actions-row">
+                                {% if current_user.can_edit_items %}
+                                <a href="{{ url_for('main.edit_item', item_id=item.id) }}" class="btn btn-outline-warning btn-sm">Edit</a>
+                                {% endif %}
+                                <a href="{{ url_for('main.asset_repairs', item_id=item.id) }}" class="btn btn-outline-secondary btn-sm">Repairs</a>
+                            </div>
+
+                            {% if current_user.can_assign_assets %}
+                            <form action="{{ url_for('main.assign_owner', item_id=item.id) }}" method="POST" class="assign-form">
+                                <input type="text" class="form-control form-control-sm assign-input pre-user-name-input" list="pre-user-options" placeholder="Search user" autocomplete="off" required>
+                                <input type="hidden" name="pre_user_id" class="pre-user-id-input" required>
+                                <button type="submit" class="btn btn-primary btn-sm">Assign</button>
+                            </form>
+                            {% endif %}
+
+                            {% if current_user.can_delete_items %}
+                            <form action="{{ url_for('main.delete_item', item_id=item.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this item?');">
+                                <button type="submit" class="btn btn-danger btn-sm btn-block">Delete</button>
+                            </form>
+                            {% endif %}
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
@@ -252,4 +311,44 @@
         {% endif %}
     </ul>
 </nav>
+
+{% if current_user.can_assign_assets %}
+<datalist id="pre-user-options">
+    {% for pre_user in pre_users %}
+    <option value="{{ pre_user.name }}" data-id="{{ pre_user.id }}"></option>
+    {% endfor %}
+</datalist>
+
+<script>
+    (function () {
+        const optionElements = Array.from(document.querySelectorAll('#pre-user-options option'));
+        const optionMap = new Map();
+        optionElements.forEach(function (option) {
+            optionMap.set(option.value.trim().toLowerCase(), option.dataset.id);
+        });
+
+        document.querySelectorAll('.assign-form').forEach(function (form) {
+            const nameInput = form.querySelector('.pre-user-name-input');
+            const idInput = form.querySelector('.pre-user-id-input');
+
+            function syncSelectedUser() {
+                const key = nameInput.value.trim().toLowerCase();
+                idInput.value = optionMap.get(key) || '';
+            }
+
+            nameInput.addEventListener('input', syncSelectedUser);
+            nameInput.addEventListener('change', syncSelectedUser);
+
+            form.addEventListener('submit', function (event) {
+                syncSelectedUser();
+                if (!idInput.value) {
+                    event.preventDefault();
+                    alert('Please select a valid user from the suggestions.');
+                    nameInput.focus();
+                }
+            });
+        });
+    })();
+</script>
+{% endif %}
 {% endblock %}

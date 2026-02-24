@@ -1,83 +1,24 @@
 {% extends "base.html" %}
 {% block body_class %}login-page{% endblock %}
 {% block content %}
-<div class="login-container" style="
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-    padding: 0;
-    position: relative; /* Ensure container is positioned relative for overlay */
-    overflow: hidden; /* Prevent scrollbars */
-">
-    <img src="{{ url_for('static', filename='solar_wind.jpeg') }}" alt="Background" style="
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover; /* Ensure the image covers the entire container */
-        opacity: 0.8; /* Adjust opacity for better readability */
-        z-index: -1; /* Place the image behind other content */
-    ">
-    <div class="container" style="
-        background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white background */
-        padding: 30px;
-        border-radius: 10px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        max-width: 400px;
-        width: 90%; /* Make it responsive */
-        text-align: center;
-    ">
-        <h2 class="text-center" style="
-            margin-bottom: 20px;
-            font-size: 24px;
-            color: #333;
-        ">Login</h2>
+<div class="auth-wrap">
+    <div class="auth-card">
+        <div class="text-center mb-3">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="auth-logo mb-2">
+            <h1 class="auth-title">Sign In</h1>
+            <p class="auth-subtitle">Inventory Management System</p>
+        </div>
         <form method="POST" class="login-form">
             {{ form.hidden_tag() }}
-            <div class="form-group" style="margin-bottom: 15px;">
-                {{ form.username.label(class="form-label", style="
-                    display: block;
-                    margin-bottom: 5px;
-                    font-size: 14px;
-                    color: #555;
-                ") }}
-                {{ form.username(class="form-control", placeholder="Username", style="
-                    width: 100%;
-                    padding: 10px;
-                    border: 1px solid #ddd;
-                    border-radius: 4px;
-                    font-size: 14px;
-                ") }}
+            <div class="form-group">
+                {{ form.username.label(class="form-label") }}
+                {{ form.username(class="form-control", placeholder="Username") }}
             </div>
-            <div class="form-group" style="margin-bottom: 20px;">
-                {{ form.password.label(class="form-label", style="
-                    display: block;
-                    margin-bottom: 5px;
-                    font-size: 14px;
-                    color: #555;
-                ") }}
-                {{ form.password(class="form-control", placeholder="Password", style="
-                    width: 100%;
-                    padding: 10px;
-                    border: 1px solid #ddd;
-                    border-radius: 4px;
-                    font-size: 14px;
-                ") }}
+            <div class="form-group mb-4">
+                {{ form.password.label(class="form-label") }}
+                {{ form.password(class="form-control", placeholder="Password") }}
             </div>
-            <button type="submit" class="btn btn-primary btn-block" style="
-                background-color: #007bff;
-                border: none;
-                color: #fff;
-                border-radius: 4px;
-                padding: 12px;
-                cursor: pointer;
-                width: 100%;
-                font-size: 16px;
-                transition: background-color 0.3s ease;
-            ">Login</button>
+            <button type="submit" class="btn btn-primary btn-block">Login</button>
         </form>
     </div>
 </div>

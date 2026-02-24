@@ -14,8 +14,24 @@
             <input type="text" class="form-control" id="type" name="type" required>
         </div>
         <div class="form-group">
-            <label for="quantity">Quantity</label>
-            <input type="number" class="form-control" id="quantity" name="quantity" min="1" required>
+            <label for="purchase_date">Purchase Date</label>
+            <input type="date" class="form-control" id="purchase_date" name="purchase_date" required>
+        </div>
+        <div class="form-group">
+            <label for="expiry_date">Expiry Date</label>
+            <input type="date" class="form-control" id="expiry_date" name="expiry_date" required>
+        </div>
+        <div class="form-group">
+            <label for="amount_per_unit">Amount Per Unit</label>
+            <input type="number" step="0.01" class="form-control" id="amount_per_unit" name="amount_per_unit">
+        </div>
+        <div class="form-group">
+            <label for="total_license">Total Licenses</label>
+            <input type="number" class="form-control" id="total_license" name="total_license" min="1" required>
+        </div>
+        <div class="form-group">
+            <label for="remaining_license">Remaining Licenses</label>
+            <input type="number" class="form-control" id="remaining_license" name="remaining_license" min="0">
         </div>
         <button type="submit" class="btn btn-primary mt-3">Add License</button>
     </form>

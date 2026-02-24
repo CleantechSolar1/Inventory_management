@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-3">Repairs: {{ item.asset_tag }}</h2>
+    <p class="mb-4">
+        <strong>Serial:</strong> {{ item.serial_number }} |
+        <strong>Current Owner:</strong> {{ item.current_owner }}
+    </p>
+
+    <div class="card mb-4">
+        <div class="card-header">Add Repair</div>
+        <div class="card-body">
+            {% if current_user.is_read_only %}
+            <p class="mb-0 text-muted">Read-only access: you can view repair history but cannot add repair entries.</p>
+            {% else %}
+            <form method="POST" action="{{ url_for('main.asset_repairs', item_id=item.id) }}">
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label for="part">Part</label>
+                        <input type="text" class="form-control" id="part" name="part" required>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="repair_date">Repair Date</label>
+                        <input type="date" class="form-control" id="repair_date" name="repair_date" required>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="registered_date">Registered Date</label>
+                        <input type="date" class="form-control" id="registered_date" name="registered_date">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label for="repaired_under_warranty">Repaired Under Warranty</label>
+                        <select class="form-control" id="repaired_under_warranty" name="repaired_under_warranty">
+                            <option value="">Select</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-8">
+                        <label for="remarks">Remarks</label>
+                        <input type="text" class="form-control" id="remarks" name="remarks" maxlength="255">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="issue_description">Issue Description</label>
+                    <textarea class="form-control" id="issue_description" name="issue_description" rows="3"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Add Repair</button>
+                <a href="{{ url_for('main.home') }}" class="btn btn-secondary">Back to Home</a>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Previous Repair History</div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Repair Date</th>
+                            <th>Registered Date</th>
+                            <th>Part</th>
+                            <th>Issue Description</th>
+                            <th>Under Warranty</th>
+                            <th>Remarks</th>
+                            <th>Added By</th>
+                            <th>Created At</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for repair in repairs %}
+                        <tr>
+                            <td>{{ repair.id }}</td>
+                            <td>{{ repair.repair_date.strftime('%Y-%m-%d') if repair.repair_date else '-' }}</td>
+                            <td>{{ repair.registered_date.strftime('%Y-%m-%d') if repair.registered_date else '-' }}</td>
+                            <td>{{ repair.part }}</td>
+                            <td>{{ repair.issue_description or '-' }}</td>
+                            <td>{{ repair.repaired_under_warranty or '-' }}</td>
+                            <td>{{ repair.remarks or '-' }}</td>
+                            <td>{{ repair.created_by or '-' }}</td>
+                            <td>{{ repair.created_at.strftime('%Y-%m-%d %H:%M') if repair.created_at else '-' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="9" class="text-center">No repair history found for this asset.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

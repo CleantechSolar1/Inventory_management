@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container my-4">
+    <h1>Expense Tracker</h1>
+
+    <div class="mb-3">
+        {% if current_user.can_manage_expenses %}
+        <a href="{{ url_for('main.add_expense') }}" class="btn btn-primary">Post Expense</a>
+        <a href="{{ url_for('main.expense_vendors') }}" class="btn btn-outline-primary">Add Vendor</a>
+        <a href="{{ url_for('main.import_expenses_csv') }}" class="btn btn-outline-success">Import CSV</a>
+        {% endif %}
+        <a href="{{ url_for('main.export_expenses_csv') }}" class="btn btn-success">Export CSV</a>
+        <a href="{{ url_for('main.home') }}" class="btn btn-secondary">Back to Home</a>
+    </div>
+
+    <form method="GET" action="{{ url_for('main.expenses') }}" class="card p-3 mb-3">
+        <div class="row">
+            <div class="col-md-3 mb-2">
+                <label for="name">Name</label>
+                <input type="text" class="form-control" name="name" id="name" value="{{ request.args.get('name', '') }}">
+            </div>
+            <div class="col-md-3 mb-2">
+                <label for="invoice_month">Invoice Month</label>
+                <input type="number" class="form-control" name="invoice_month" id="invoice_month" min="1" max="12" value="{{ request.args.get('invoice_month', '') }}">
+            </div>
+            <div class="col-md-3 mb-2">
+                <label for="invoice_year">Invoice Year</label>
+                <input type="number" class="form-control" name="invoice_year" id="invoice_year" min="2000" value="{{ request.args.get('invoice_year', '') }}">
+            </div>
+            <div class="col-md-3 mb-2">
+                <label for="vendor">Vendor</label>
+                <input type="text" class="form-control" name="vendor" id="vendor" value="{{ request.args.get('vendor', '') }}">
+            </div>
+            <div class="col-md-3 mb-2">
+                <label for="cleantech_entity">Cleantech Entity</label>
+                <input type="text" class="form-control" name="cleantech_entity" id="cleantech_entity" value="{{ request.args.get('cleantech_entity', '') }}">
+            </div>
+            <div class="col-md-3 mb-2 d-flex align-items-end">
+                <button class="btn btn-primary mr-2" type="submit">Apply</button>
+                <a href="{{ url_for('main.expenses') }}" class="btn btn-secondary">Clear</a>
+            </div>
+        </div>
+    </form>
+
+    <div class="row">
+        <div class="col-lg-9">
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Sub Category</th>
+                            <th>Name</th>
+                            <th>Payment Date</th>
+                            <th>Invoice Month</th>
+                            <th>Invoice Year</th>
+                            <th>Vendor</th>
+                            <th>Cleantech Entity</th>
+                            <th>Invoice Date</th>
+                            <th>Currency</th>
+                            <th>Amount</th>
+                            <th>Amount (USD)</th>
+                            <th>Payment Mode</th>
+                            <th>Remarks</th>
+                            <th>Created By</th>
+                            <th>Created At</th>
+                            <th>Status</th>
+                            <th>Void Info</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for expense in expenses %}
+                        <tr class="{% if expense.is_void %}table-danger{% endif %}">
+                            <td>{{ expense.category }}</td>
+                            <td>{{ expense.sub_category }}</td>
+                            <td>{{ expense.name }}</td>
+                            <td>{{ expense.payment_date }}</td>
+                            <td>{{ expense.invoice_month }}</td>
+                            <td>{{ expense.invoice_year }}</td>
+                            <td>{{ expense.vendor }}</td>
+                            <td>{{ expense.cleantech_entity }}</td>
+                            <td>{{ expense.invoice_date }}</td>
+                            <td>{{ expense.currency }}</td>
+                            <td>{{ expense.amount }}</td>
+                            <td>{{ expense.amount_usd or '-' }}</td>
+                            <td>{{ expense.payment_mode }}</td>
+                            <td>{{ expense.remarks or '-' }}</td>
+                            <td>{{ expense.created_by }}</td>
+                            <td>{{ expense.created_at.strftime('%Y-%m-%d %H:%M') if expense.created_at else '-' }}</td>
+                            <td>{{ 'VOID' if expense.is_void else 'ACTIVE' }}</td>
+                            <td>
+                                {% if expense.is_void %}
+                                {{ expense.void_remarks }}<br>
+                                <small>By {{ expense.voided_by }} at {{ expense.voided_at.strftime('%Y-%m-%d %H:%M') if expense.voided_at else '-' }}</small>
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if current_user.can_manage_expenses and not expense.is_void %}
+                                <a href="{{ url_for('main.void_expense', expense_id=expense.id) }}" class="btn btn-warning btn-sm">Void</a>
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="19" class="text-center">No expense entries found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="col-lg-3">
+            <div class="card mb-3">
+                <div class="card-header">Year-wise Budget (USD)</div>
+                <div class="card-body">
+                    {% if current_user.can_manage_expenses %}
+                    <form method="POST" action="{{ url_for('main.set_expense_budget') }}" class="mb-3">
+                        <div class="form-group">
+                            <label for="year">Year</label>
+                            <input type="number" class="form-control form-control-sm" id="year" name="year" min="2000" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="total_budget_usd">Total Budget (USD)</label>
+                            <input type="number" step="0.01" class="form-control form-control-sm" id="total_budget_usd" name="total_budget_usd" min="0" required>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-primary btn-block">Save Budget</button>
+                    </form>
+                    {% endif %}
+
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Year</th>
+                                    <th>Expense</th>
+                                    <th>Budget</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for year in all_years %}
+                                {% set expense_total = year_expense_totals.get(year, 0) %}
+                                {% set budget_total = budget_map.get(year) %}
+                                {% set over_or_equal = budget_total is not none and expense_total >= budget_total %}
+                                <tr class="{% if over_or_equal %}table-danger{% endif %}">
+                                    <td>{{ year }}</td>
+                                    <td class="{% if over_or_equal %}text-danger font-weight-bold{% endif %}">
+                                        {{ '%.2f'|format(expense_total|float) }}
+                                    </td>
+                                    <td class="{% if over_or_equal %}text-danger font-weight-bold{% endif %}">
+                                        {{ '%.2f'|format(budget_total|float) if budget_total is not none else '-' }}
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="3" class="text-center">No yearly data.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

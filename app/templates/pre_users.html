@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Manage Pre-Users</h2>
+
+    <div class="card mb-4">
+        <div class="card-header">Add Pre-User</div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('main.manage_pre_users') }}">
+                <div class="form-row">
+                    <div class="form-group col-md-5">
+                        <label for="name">Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="form-group col-md-5">
+                        <label for="department">Department (Optional)</label>
+                        <input type="text" class="form-control" id="department" name="department">
+                    </div>
+                    <div class="form-group col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">Add</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">Bulk Import Pre-Users</div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('main.import_pre_users') }}" enctype="multipart/form-data">
+                <div class="form-row">
+                    <div class="form-group col-md-8">
+                        <label for="file">CSV File</label>
+                        <input type="file" class="form-control-file" id="file" name="file" accept=".csv" required>
+                        <small class="form-text text-muted">
+                            Format: `name,department` (header optional). Department is optional.
+                        </small>
+                    </div>
+                    <div class="form-group col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-success w-100">Import CSV</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Pre-User List</div>
+        <div class="card-body p-0">
+            <table class="table table-striped mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Department</th>
+                        <th>Created At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pre_user in pre_users %}
+                    <tr>
+                        <td>{{ pre_user.id }}</td>
+                        <td>{{ pre_user.name }}</td>
+                        <td>{{ pre_user.department or '-' }}</td>
+                        <td>{{ pre_user.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            <form method="POST" action="{{ url_for('main.delete_pre_user', pre_user_id=pre_user.id) }}" style="display:inline;" onsubmit="return confirm('Delete this pre-user?');">
+                                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center">No pre-users added yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% if pre_users_pagination and pre_users_pagination.pages > 1 %}
+            <nav class="m-3" aria-label="Pre-user pagination">
+                <ul class="pagination mb-0">
+                    <li class="page-item {% if not pre_users_pagination.has_prev %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('main.manage_pre_users', page=pre_users_pagination.prev_num) if pre_users_pagination.has_prev else '#' }}">Previous</a>
+                    </li>
+                    {% for p in pre_users_pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=1) %}
+                    {% if p %}
+                    <li class="page-item {% if p == pre_users_pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('main.manage_pre_users', page=p) }}">{{ p }}</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                    {% endfor %}
+                    <li class="page-item {% if not pre_users_pagination.has_next %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('main.manage_pre_users', page=pre_users_pagination.next_num) if pre_users_pagination.has_next else '#' }}">Next</a>
+                    </li>
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a href="{{ url_for('main.home') }}" class="btn btn-secondary">Back to Home</a>
+    </div>
+</div>
+{% endblock %}

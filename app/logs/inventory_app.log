@@ -1,117 +1,69 @@
-2025-06-20 15:14:52,374 - app - ERROR - Exception on / [GET]
-Traceback (most recent call last):
-  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
-    self.dialect.do_execute(
-  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\sqlalchemy\engine\default.py", line 941, in do_execute
-    cursor.execute(statement, parameters)
-sqlite3.OperationalError: no such column: inventory.is_deleted
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\flask\app.py", line 2529, in wsgi_app
-    response = self.full_dispatch_request()
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\flask\app.py", line 1825, in full_dispatch_request
-    rv = self.handle_user_exception(e)
-         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\flask\app.py", line 1823, in full_dispatch_request
-    rv = self.dispatch_request()
-         ^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\flask\app.py", line 1799, in dispatch_request
-    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\flask_login\utils.py", line 290, in decorated_view
-    return current_app.ensure_sync(func)(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\app\routes\main.py", line 81, in home
-    items = items_query.paginate(page=page, per_page=per_page, error_out=False)
-            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\flask_sqlalchemy\query.py", line 98, in paginate
-    return QueryPagination(
-           ^^^^^^^^^^^^^^^^
-  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\flask_sqlalchemy\pagination.py", line 72, in __init__
-    items = self._query_items()
-            ^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\flask_sqlalchemy\pagination.py", line 358, in _query_items
-    out = query.limit(self.per_page).offset(self._query_offset).all()
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2673, in all
-    return self._iter().all()  # type: ignore
-           ^^^^^^^^^^^^
-  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2827, in _iter
-    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
-                                                  ^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2362, in execute
-    return self._execute_internal(
-           ^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2247, in _execute_internal
-    result: Result[Any] = compile_state_cls.orm_execute_statement(
-                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\sqlalchemy\orm\context.py", line 293, in orm_execute_statement
-    result = conn.execute(
-             ^^^^^^^^^^^^^
-  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1418, in execute
-    return meth(
-           ^^^^^
-  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\sqlalchemy\sql\elements.py", line 515, in _execute_on_connection
-    return connection._execute_clauseelement(
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1640, in _execute_clauseelement
-    ret = self._execute_context(
-          ^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1846, in _execute_context
-    return self._exec_single_context(
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1986, in _exec_single_context
-    self._handle_dbapi_exception(
-  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2355, in _handle_dbapi_exception
-    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
-  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
-    self.dialect.do_execute(
-  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\sqlalchemy\engine\default.py", line 941, in do_execute
-    cursor.execute(statement, parameters)
-sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such column: inventory.is_deleted
-[SQL: SELECT inventory.id AS inventory_id, inventory.asset_tag AS inventory_asset_tag, inventory.asset_type AS inventory_asset_type, inventory.status AS inventory_status, inventory.brand AS inventory_brand, inventory.model AS inventory_model, inventory.fa_code AS inventory_fa_code, inventory.serial_number AS inventory_serial_number, inventory.operating_system AS inventory_operating_system, inventory.purchase_date AS inventory_purchase_date, inventory.age AS inventory_age, inventory.current_owner AS inventory_current_owner, inventory.previous_owner AS inventory_previous_owner, inventory.warranty_end_date AS inventory_warranty_end_date, inventory.condition_notes AS inventory_condition_notes, inventory.department AS inventory_department, inventory.office AS inventory_office, inventory.country AS inventory_country, inventory.vendor_location AS inventory_vendor_location, inventory.updated_by AS inventory_updated_by, inventory.is_deleted AS inventory_is_deleted, inventory.deleted_at AS inventory_deleted_at, inventory.deleted_by AS inventory_deleted_by 
-FROM inventory
- LIMIT ? OFFSET ?]
-[parameters: (20, 0)]
-(Background on this error at: https://sqlalche.me/e/20/e3q8)
-2025-06-24 16:34:58,117 - app - INFO - Fetched 0 logs
-2025-06-24 16:42:54,670 - app - INFO - Fetched 0 logs
-2025-07-08 16:12:39,063 - app - INFO - User Admin added new item: INLTLNV0005 with serial number: R914XRZB
-2025-07-08 16:14:53,447 - app - INFO - Admin updated item: INLTLNV0005 with serial number: R914XRZB
-2025-07-08 16:29:29,918 - app - INFO - User Maaz added new item: SGLTLNV0376 with serial number: PF2PCWXC
-2025-07-08 16:31:45,418 - app - INFO - User Maaz added new item: THLTDLL0204 with serial number: 5VL8MW2
-2025-07-10 14:15:35,650 - app - INFO - User Admin added new item: VNLTLGG0004 with serial number: NA
-2025-07-10 14:16:30,766 - app - INFO - User Admin added new item: VNLTLGG0005 with serial number: 20303082
-2025-07-10 14:23:14,448 - app - INFO - User Admin added new item: PHMNLNV0006 with serial number: 657657
-2025-07-10 15:09:11,992 - app - INFO - User Admin added new item: INLTLNV0001 with serial number: R914XRZB
-2025-07-10 15:11:31,758 - app - INFO - User Admin added new item: KHLTHPP0002 with serial number: PC1NZH7B
-2025-07-10 15:13:47,741 - app - INFO - User Maaz added new item: SGLTSAM0003 with serial number: PC14LXFY
-2025-07-10 15:15:03,080 - app - INFO - Maaz updated item: INLTLNV0001 with serial number: R914XRZB
-2025-07-10 15:15:32,319 - app - INFO - Maaz updated item: INLTLNV0001 with serial number: R914XRZB
-2025-07-10 15:17:07,667 - app - INFO - User Maaz added new item: PHPRAPL0001 with serial number: PC16DTXX
-2025-07-10 15:21:02,069 - app - INFO - User Admin added new item: VNLTACR0004 with serial number: PC1R79DE
-2025-07-17 16:47:18,676 - app - INFO - User Maaz added new item: SGLTDLL0005 with serial number: 89H24P2
-2025-07-17 17:17:43,191 - app - INFO - Maaz updated item: SGLTDLL0005 with serial number: 89H24P2
-2025-07-17 17:39:34,060 - app - INFO - User Maaz added new item: INLTLNV0001 with serial number: PC16DTXX
-2025-07-17 17:40:15,918 - app - INFO - Maaz updated item: INLTLNV0001 with serial number: PC16DTXX
-2025-07-17 17:42:07,985 - app - INFO - User Maaz added new item: VNLTLNV0002 with serial number: R914XRZB
-2025-07-23 17:27:17,007 - app - INFO - Fetched 26 logs
-2025-07-23 17:40:39,784 - app - INFO - Fetched 26 logs
-2025-07-23 17:42:08,886 - app - INFO - Fetched 26 logs
-2025-07-23 17:42:14,371 - app - INFO - Fetched 0 logs
-2025-07-23 17:42:24,309 - app - INFO - Fetched 26 logs
-2025-07-24 09:55:45,770 - app - INFO - Fetched 26 logs
-2025-07-24 09:58:47,521 - app - INFO - Fetched 26 logs
-2025-07-24 10:01:31,201 - app - INFO - Fetched 26 logs
-2025-07-24 10:02:23,453 - app - INFO - Fetched 26 logs
-2025-07-24 10:02:53,983 - app - INFO - Fetched 26 logs
-2025-07-24 10:20:03,512 - app - INFO - Fetched 26 logs
-2025-07-24 10:20:34,989 - app - INFO - Fetched 21 logs
-2025-07-24 10:20:51,935 - app - INFO - Fetched 26 logs
-2025-07-24 10:21:07,389 - app - INFO - Fetched 5 logs
-2025-07-24 10:23:46,535 - app - INFO - Fetched 5 logs
-2025-07-24 10:23:49,382 - app - INFO - Fetched 26 logs
-2025-07-24 10:23:56,346 - app - INFO - Fetched 5 logs
+2026-02-23 12:31:55,743 - app - INFO - User Admin added new item: SGLTLNV0486 with serial number: PW0BC04W
+2026-02-23 12:36:48,116 - app - ERROR - Error importing CSV file: Unable to parse date: 3
+2026-02-23 12:37:51,567 - app - ERROR - Error importing CSV file: Unable to parse date: 3
+2026-02-23 12:39:13,059 - app - ERROR - Error importing CSV file: Unable to parse date: 3
+2026-02-23 12:39:59,011 - app - ERROR - Error importing CSV file: Unable to parse date: 3
+2026-02-23 12:41:29,194 - app - ERROR - Error importing CSV file: Unable to parse date: 100
+2026-02-23 12:48:56,333 - app - ERROR - Error importing CSV file: Row 2 has 19 columns; expected at least 20.
+2026-02-23 12:49:55,338 - app - ERROR - Error importing CSV file: Unable to parse date: 03/01/2022
+2026-02-23 12:50:38,427 - app - ERROR - Error importing CSV file: invalid literal for int() with base 10: 'IT'
+2026-02-23 12:51:09,481 - app - ERROR - Error importing CSV file: invalid literal for int() with base 10: 'IT'
+2026-02-23 12:52:33,248 - app - ERROR - Error importing CSV file: invalid literal for int() with base 10: 'IT'
+2026-02-23 12:56:41,992 - app - INFO - Fetched 2 logs
+2026-02-23 13:02:51,775 - app - INFO - Fetched 4 logs
+2026-02-23 13:20:18,074 - app - INFO - Fetched 4 logs
+2026-02-23 14:04:53,521 - app - INFO - Fetched 7 logs
+2026-02-23 14:05:48,383 - app - INFO - Fetched 8 logs
+2026-02-23 14:08:53,116 - app - INFO - Admin updated item: SGLTLNV0486 with serial number: PW0BC04W
+2026-02-23 14:09:38,059 - app - INFO - Admin updated item: SGLTLNV0486 with serial number: PW0BC04W
+2026-02-23 14:09:39,306 - app - INFO - Fetched 12 logs
+2026-02-23 14:22:05,486 - app - INFO - Admin updated item: INLTLNV0005 with serial number: R914XRZB
+2026-02-23 14:22:09,801 - app - INFO - Fetched 13 logs
+2026-02-23 14:22:28,980 - app - INFO - Admin updated item: SGLTLNV0486 with serial number: PW0BC04W
+2026-02-23 14:24:05,799 - app - INFO - Admin updated item: SGLTLNV0486 with serial number: PW0BC04W
+2026-02-23 14:27:12,568 - app - INFO - Fetched 15 logs
+2026-02-23 14:36:21,197 - app - INFO - Fetched 16 logs
+2026-02-23 14:52:15,618 - app - INFO - Fetched 16 logs
+2026-02-23 16:06:49,650 - app - INFO - Fetched 16 logs
+2026-02-23 16:07:12,003 - app - INFO - Fetched 16 logs
+2026-02-23 16:07:14,798 - app - INFO - Fetched 16 logs
+2026-02-23 16:07:15,692 - app - INFO - Fetched 16 logs
+2026-02-23 16:07:20,167 - app - INFO - Fetched 16 logs
+2026-02-23 16:07:21,141 - app - INFO - Fetched 16 logs
+2026-02-23 16:07:31,518 - app - INFO - Fetched 16 logs
+2026-02-23 16:08:44,721 - app - INFO - Fetched 16 logs
+2026-02-23 16:08:46,348 - app - INFO - Fetched 16 logs
+2026-02-23 16:09:43,650 - app - INFO - Fetched 16 logs
+2026-02-23 16:09:44,761 - app - INFO - Fetched 16 logs
+2026-02-23 16:17:26,584 - app - INFO - User Admin added new item: SGLTLNV0017 with serial number: PW0BC04
+2026-02-23 16:19:11,741 - app - INFO - User Admin added new item: VNLTLNV0018 with serial number: PW0BC0445
+2026-02-23 16:25:31,057 - app - INFO - User Admin added new item: INLTDLL0487 with serial number: PW0BC0987
+2026-02-23 16:26:29,017 - app - INFO - Fetched 20 logs
+2026-02-23 16:28:23,379 - app - INFO - Fetched 20 logs
+2026-02-23 16:52:16,560 - app - INFO - User Admin added new item: MYLTLNV0006 with serial number: PW0BC9999
+2026-02-24 09:18:35,113 - app - INFO - Fetched 28 logs
+2026-02-24 09:19:48,695 - app - INFO - Fetched 29 logs
+2026-02-24 09:45:53,708 - app - INFO - Fetched 30 logs
+2026-02-24 10:44:58,940 - app - ERROR - Error importing pre-users: (pymysql.err.IntegrityError) (1062, "Duplicate entry 'Tirth Mehta' for key 'pre_user.ix_pre_user_name'")
+[SQL: INSERT INTO pre_user (name, department, created_at) VALUES (%(name)s, %(department)s, %(created_at)s)]
+[parameters: {'name': 'Tirth Mehta', 'department': None, 'created_at': datetime.datetime(2026, 2, 24, 5, 14, 58, 931528)}]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+2026-02-24 10:45:50,832 - app - ERROR - Error importing pre-users: (pymysql.err.IntegrityError) (1062, "Duplicate entry 'Tirth Mehta' for key 'pre_user.ix_pre_user_name'")
+[SQL: INSERT INTO pre_user (name, department, created_at) VALUES (%(name)s, %(department)s, %(created_at)s)]
+[parameters: {'name': 'Tirth Mehta', 'department': None, 'created_at': datetime.datetime(2026, 2, 24, 5, 15, 50, 828275)}]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+2026-02-24 11:04:08,004 - app - INFO - Fetched 41 logs
+2026-02-24 11:04:46,001 - app - INFO - Fetched 41 logs
+2026-02-24 11:14:04,403 - app - INFO - Fetched 41 logs
+2026-02-24 12:31:41,361 - app - ERROR - Error importing CSV file: Unable to parse date: 3/17/22
+2026-02-24 12:41:44,548 - app - INFO - Fetched 42 logs
+2026-02-24 12:46:45,310 - app - INFO - Fetched 42 logs
+2026-02-24 13:40:04,402 - app - INFO - Fetched 44 logs
+2026-02-24 13:40:13,832 - app - ERROR - Error importing CSV file: (pymysql.err.IntegrityError) (1062, "Duplicate entry 'CXT9YQ2' for key 'inventory.serial_number'")
+[SQL: INSERT INTO inventory (asset_tag, asset_type, status, brand, model, fa_code, serial_number, operating_system, purchase_date, purchase_amount, age, current_owner, previous_owner, warranty_end_date, condition_notes, department, office, country, vendor_location, updated_by, is_deleted, deleted_at, deleted_by) VALUES (%(asset_tag)s, %(asset_type)s, %(status)s, %(brand)s, %(model)s, %(fa_code)s, %(serial_number)s, %(operating_system)s, %(purchase_date)s, %(purchase_amount)s, %(age)s, %(current_owner)s, %(previous_owner)s, %(warranty_end_date)s, %(condition_notes)s, %(department)s, %(office)s, %(country)s, %(vendor_location)s, %(updated_by)s, %(is_deleted)s, %(deleted_at)s, %(deleted_by)s)]
+[parameters: {'asset_tag': 'INLTDLL0023', 'asset_type': 'Laptop', 'status': 'Available', 'brand': 'Dell', 'model': '5570', 'fa_code': 'FACP000010', 'serial_number': 'CXT9YQ2', 'operating_system': 'Windows', 'purchase_date': datetime.datetime(2018, 9, 18, 0, 0), 'purchase_amount': Decimal('100'), 'age': 7, 'current_owner': 'IT', 'previous_owner': 'Tejaswini Sadula', 'warranty_end_date': datetime.datetime(2019, 12, 21, 0, 0), 'condition_notes': 'Working Condition', 'department': 'IT', 'office': 'Mumbai', 'country': 'India', 'vendor_location': 'India', 'updated_by': 'Sameer Mishra', 'is_deleted': 0, 'deleted_at': None, 'deleted_by': None}]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+2026-02-24 13:43:06,587 - app - INFO - Fetched 45 logs
+2026-02-24 14:11:20,580 - app - ERROR - Error importing expense CSV: Row 2: vendor "Salesforce" is not pre-added
+2026-02-24 14:13:10,444 - app - INFO - Fetched 47 logs
+2026-02-24 15:18:25,943 - app - INFO - Fetched 47 logs

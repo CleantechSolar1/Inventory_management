@@ -47,6 +47,27 @@
                     {% endfor %}
                 </tbody>
             </table>
+            {% if logs_pagination and logs_pagination.pages > 1 %}
+            <nav class="mt-3" aria-label="Log pagination">
+                <ul class="pagination mb-0">
+                    <li class="page-item {% if not logs_pagination.has_prev %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('main.view_logs', page=logs_pagination.prev_num, filter=current_filter, start_date=start_date, end_date=end_date) if logs_pagination.has_prev else '#' }}">Previous</a>
+                    </li>
+                    {% for p in logs_pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=1) %}
+                    {% if p %}
+                    <li class="page-item {% if p == logs_pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('main.view_logs', page=p, filter=current_filter, start_date=start_date, end_date=end_date) }}">{{ p }}</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                    {% endfor %}
+                    <li class="page-item {% if not logs_pagination.has_next %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('main.view_logs', page=logs_pagination.next_num, filter=current_filter, start_date=start_date, end_date=end_date) if logs_pagination.has_next else '#' }}">Next</a>
+                    </li>
+                </ul>
+            </nav>
+            {% endif %}
         </div>
     </div>
     <div class="mt-4">

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Add Domain</h2>
+    <form method="POST" action="{{ url_for('main.add_domain') }}">
+        <div class="form-group">
+            <label for="domain">Domain</label>
+            <input type="text" class="form-control" id="domain" name="domain" required>
+        </div>
+        <div class="form-group">
+            <label for="purchase_date">Purchase Date</label>
+            <input type="date" class="form-control" id="purchase_date" name="purchase_date" required>
+        </div>
+        <div class="form-group">
+            <label for="renewal_date">Renewal Date</label>
+            <input type="date" class="form-control" id="renewal_date" name="renewal_date" required>
+        </div>
+        <div class="form-group">
+            <label for="country">Country</label>
+            <input type="text" class="form-control" id="country" name="country">
+        </div>
+        <div class="form-group">
+            <label for="amount">Amount</label>
+            <input type="number" step="0.01" class="form-control" id="amount" name="amount">
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">Add Domain</button>
+        <a href="{{ url_for('main.domains') }}" class="btn btn-secondary mt-3">Back</a>
+    </form>
+</div>
+{% endblock %}

@@ -1,54 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container mt-4">
-    <h2>Add laptop for Repair</h2>
 
-    <form method="POST">
-        {{ form.hidden_tag() }}
-        <div class="form-group">
-            {{ form.asset_tag.label }} {{ form.asset_tag(class="form-control") }}
-        </div>
-        <div class="form-group">
-            {{ form.serial_number.label }} {{ form.serial_number(class="form-control") }}
-        </div>
-        <div class="form-group">
-    {{ form.brand.label }} 
-    {{ form.brand(class="form-control") }}
-</div>
-<div class="form-group">
-    {{ form.model.label }} 
-    {{ form.model(class="form-control") }}
-</div>
-<div class="form-group">
-    {{ form.part.label }} 
-    {{ form.part(class="form-control") }}
-</div>
-        <div class="form-group">
-            {{ form.issue_description.label }} {{ form.issue_description(class="form-control") }}
-        </div>
-
-
-
-<div class="form-group">
-    {{ form.registered_date.label }}<br>
-    {{ form.registered_date(class="form-control") }}
+    <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
+    <h2>Repair Records</h2>
+    <a href="{{ url_for('main.add_repair') }}" class="btn btn-primary">➕ Add for Repair</a>
 </div>
 
-<div class="form-group">
-    {{ form.repair_date.label }}<br>
-    {{ form.repair_date(class="form-control") }}
-</div>
-
-<div class="form-group">
-    {{ form.repaired_under_warranty.label }}<br>
-    {{ form.repaired_under_warranty(class="form-control") }}
-</div>
-
-        <button type="submit" class="btn btn-primary">Add Repair</button>
-    </form>
-
-    <hr>
-<h2>Laptops for Repair</h2>
     <table class="table table-striped mt-3">
         <thead>
             <tr>

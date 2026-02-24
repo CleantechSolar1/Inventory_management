@@ -1,0 +1,117 @@
+2025-06-20 15:14:52,374 - app - ERROR - Exception on / [GET]
+Traceback (most recent call last):
+  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\sqlalchemy\engine\default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+sqlite3.OperationalError: no such column: inventory.is_deleted
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\flask\app.py", line 2529, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\flask\app.py", line 1825, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\flask\app.py", line 1823, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\flask\app.py", line 1799, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\flask_login\utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\app\routes\main.py", line 81, in home
+    items = items_query.paginate(page=page, per_page=per_page, error_out=False)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\flask_sqlalchemy\query.py", line 98, in paginate
+    return QueryPagination(
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\flask_sqlalchemy\pagination.py", line 72, in __init__
+    items = self._query_items()
+            ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\flask_sqlalchemy\pagination.py", line 358, in _query_items
+    out = query.limit(self.per_page).offset(self._query_offset).all()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2673, in all
+    return self._iter().all()  # type: ignore
+           ^^^^^^^^^^^^
+  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2827, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2362, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2247, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\sqlalchemy\orm\context.py", line 293, in orm_execute_statement
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1418, in execute
+    return meth(
+           ^^^^^
+  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\sqlalchemy\sql\elements.py", line 515, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1640, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2355, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "C:\Users\MaazHussain\Desktop\Maaz\Inventory_app_sandbox\.venv\Lib\site-packages\sqlalchemy\engine\default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such column: inventory.is_deleted
+[SQL: SELECT inventory.id AS inventory_id, inventory.asset_tag AS inventory_asset_tag, inventory.asset_type AS inventory_asset_type, inventory.status AS inventory_status, inventory.brand AS inventory_brand, inventory.model AS inventory_model, inventory.fa_code AS inventory_fa_code, inventory.serial_number AS inventory_serial_number, inventory.operating_system AS inventory_operating_system, inventory.purchase_date AS inventory_purchase_date, inventory.age AS inventory_age, inventory.current_owner AS inventory_current_owner, inventory.previous_owner AS inventory_previous_owner, inventory.warranty_end_date AS inventory_warranty_end_date, inventory.condition_notes AS inventory_condition_notes, inventory.department AS inventory_department, inventory.office AS inventory_office, inventory.country AS inventory_country, inventory.vendor_location AS inventory_vendor_location, inventory.updated_by AS inventory_updated_by, inventory.is_deleted AS inventory_is_deleted, inventory.deleted_at AS inventory_deleted_at, inventory.deleted_by AS inventory_deleted_by 
+FROM inventory
+ LIMIT ? OFFSET ?]
+[parameters: (20, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-06-24 16:34:58,117 - app - INFO - Fetched 0 logs
+2025-06-24 16:42:54,670 - app - INFO - Fetched 0 logs
+2025-07-08 16:12:39,063 - app - INFO - User Admin added new item: INLTLNV0005 with serial number: R914XRZB
+2025-07-08 16:14:53,447 - app - INFO - Admin updated item: INLTLNV0005 with serial number: R914XRZB
+2025-07-08 16:29:29,918 - app - INFO - User Maaz added new item: SGLTLNV0376 with serial number: PF2PCWXC
+2025-07-08 16:31:45,418 - app - INFO - User Maaz added new item: THLTDLL0204 with serial number: 5VL8MW2
+2025-07-10 14:15:35,650 - app - INFO - User Admin added new item: VNLTLGG0004 with serial number: NA
+2025-07-10 14:16:30,766 - app - INFO - User Admin added new item: VNLTLGG0005 with serial number: 20303082
+2025-07-10 14:23:14,448 - app - INFO - User Admin added new item: PHMNLNV0006 with serial number: 657657
+2025-07-10 15:09:11,992 - app - INFO - User Admin added new item: INLTLNV0001 with serial number: R914XRZB
+2025-07-10 15:11:31,758 - app - INFO - User Admin added new item: KHLTHPP0002 with serial number: PC1NZH7B
+2025-07-10 15:13:47,741 - app - INFO - User Maaz added new item: SGLTSAM0003 with serial number: PC14LXFY
+2025-07-10 15:15:03,080 - app - INFO - Maaz updated item: INLTLNV0001 with serial number: R914XRZB
+2025-07-10 15:15:32,319 - app - INFO - Maaz updated item: INLTLNV0001 with serial number: R914XRZB
+2025-07-10 15:17:07,667 - app - INFO - User Maaz added new item: PHPRAPL0001 with serial number: PC16DTXX
+2025-07-10 15:21:02,069 - app - INFO - User Admin added new item: VNLTACR0004 with serial number: PC1R79DE
+2025-07-17 16:47:18,676 - app - INFO - User Maaz added new item: SGLTDLL0005 with serial number: 89H24P2
+2025-07-17 17:17:43,191 - app - INFO - Maaz updated item: SGLTDLL0005 with serial number: 89H24P2
+2025-07-17 17:39:34,060 - app - INFO - User Maaz added new item: INLTLNV0001 with serial number: PC16DTXX
+2025-07-17 17:40:15,918 - app - INFO - Maaz updated item: INLTLNV0001 with serial number: PC16DTXX
+2025-07-17 17:42:07,985 - app - INFO - User Maaz added new item: VNLTLNV0002 with serial number: R914XRZB
+2025-07-23 17:27:17,007 - app - INFO - Fetched 26 logs
+2025-07-23 17:40:39,784 - app - INFO - Fetched 26 logs
+2025-07-23 17:42:08,886 - app - INFO - Fetched 26 logs
+2025-07-23 17:42:14,371 - app - INFO - Fetched 0 logs
+2025-07-23 17:42:24,309 - app - INFO - Fetched 26 logs
+2025-07-24 09:55:45,770 - app - INFO - Fetched 26 logs
+2025-07-24 09:58:47,521 - app - INFO - Fetched 26 logs
+2025-07-24 10:01:31,201 - app - INFO - Fetched 26 logs
+2025-07-24 10:02:23,453 - app - INFO - Fetched 26 logs
+2025-07-24 10:02:53,983 - app - INFO - Fetched 26 logs
+2025-07-24 10:20:03,512 - app - INFO - Fetched 26 logs
+2025-07-24 10:20:34,989 - app - INFO - Fetched 21 logs
+2025-07-24 10:20:51,935 - app - INFO - Fetched 26 logs
+2025-07-24 10:21:07,389 - app - INFO - Fetched 5 logs
+2025-07-24 10:23:46,535 - app - INFO - Fetched 5 logs
+2025-07-24 10:23:49,382 - app - INFO - Fetched 26 logs
+2025-07-24 10:23:56,346 - app - INFO - Fetched 5 logs

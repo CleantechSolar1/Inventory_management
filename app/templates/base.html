@@ -4,13 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inventory Management System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/custom.css') }}">
 </head>
 <body class="d-flex flex-column min-vh-100 {% block body_class %}{% endblock %}">
-    <nav class="navbar navbar-expand-lg navbar-light bg-light" aria-label="Main Navigation">
-        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" style="max-height: 40px; margin-right: 10px;">
+    <nav class="navbar navbar-expand-lg navbar-light app-navbar" aria-label="Main Navigation">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="app-logo">
         <a class="navbar-brand" href="{{ url_for('main.home') }}">Assets Management System</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -49,7 +52,8 @@
 </div>
     </nav>
 
-    <div class="mt-4 flex-grow-1">
+    <main class="app-main flex-grow-1">
+        <div class="container-fluid app-flash-wrap">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -62,15 +66,18 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
+        </div>
 
+        <div class="app-content-wrap">
         {% block content %}
         <!-- Content Block (e.g., Login Form) -->
         {% endblock %}
-    </div>
+        </div>
+    </main>
 
-    <footer class="bg-light text-center text-lg-start py-3 mt-auto">
+    <footer class="app-footer text-center text-lg-start py-3 mt-auto">
         <div class="container">
-            <span class="text-muted">© 2024 Inventory Management System. All rights reserved. Made By Sameer Mishra</span>
+            <span class="text-muted">© 2026 Inventory Management System. All rights reserved. Made By Sameer Mishra</span>
         </div>
     </footer>
 

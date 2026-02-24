@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Void Expense</h2>
+    <div class="card p-3 mb-3">
+        <p class="mb-1"><strong>Name:</strong> {{ expense.name }}</p>
+        <p class="mb-1"><strong>Vendor:</strong> {{ expense.vendor }}</p>
+        <p class="mb-1"><strong>Amount:</strong> {{ expense.currency }} {{ expense.amount }}</p>
+        <p class="mb-0"><strong>Payment Date:</strong> {{ expense.payment_date }}</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('main.void_expense', expense_id=expense.id) }}">
+        <div class="form-group">
+            <label for="void_remarks">Void Remarks</label>
+            <textarea class="form-control" id="void_remarks" name="void_remarks" rows="4" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-warning">Void Invoice</button>
+        <a href="{{ url_for('main.expenses') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

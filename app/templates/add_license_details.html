@@ -1,25 +1,30 @@
 {% extends "base.html" %}
-
 {% block content %}
 <div class="container mt-4">
-    <h2>Add License</h2>
-
-    <form method="POST" action="{{ url_for('main.add_license') }}">
+    <h2>Add License Detail</h2>
+    <form method="POST">
         <div class="form-group">
-            <label for="name">License Name</label>
-            <input type="text" class="form-control" id="name" name="name" required>
-        </div>
-        <div class="form-group">
-            <label for="type">License Type</label>
-            <input type="text" class="form-control" id="type" name="type" required>
+            <label for="current_owner">Current Owner</label>
+            <input type="text" class="form-control" id="current_owner" name="current_owner" required>
         </div>
         <div class="form-group">
             <label for="quantity">Quantity</label>
-            <input type="number" class="form-control" id="quantity" name="quantity" min="1" required>
+            <input type="number" class="form-control" id="quantity" name="quantity" min="1" value="1" required>
         </div>
-        <button type="submit" class="btn btn-primary mt-3">Add License</button>
+        <div class="form-group">
+            <label for="purchase_date">Purchase Date</label>
+            <input type="date" class="form-control" id="purchase_date" name="purchase_date" required>
+        </div>
+        <div class="form-group">
+            <label for="expiry_date">Expiry Date</label>
+            <input type="date" class="form-control" id="expiry_date" name="expiry_date" required>
+        </div>
+        <div class="form-group">
+            <label for="remarks">Remarks</label>
+            <textarea class="form-control" id="remarks" name="remarks"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">Save</button>
+        <a href="{{ url_for('main.license_details', license_id=license.id) }}" class="btn btn-secondary mt-3">Back</a>
     </form>
-
-    <a href="{{ url_for('main.licenses') }}" class="btn btn-secondary mt-3">Back to Licenses</a>
 </div>
 {% endblock %}

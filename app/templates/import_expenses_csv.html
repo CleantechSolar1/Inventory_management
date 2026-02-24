@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Import Expense CSV</h2>
+    <div class="card p-3 mb-3">
+        <p class="mb-2"><strong>Required columns:</strong> category, sub_category, name, payment_date, invoice_month, invoice_year, vendor, cleantech_entity, invoice_date, currency, amount, payment_mode</p>
+        <p class="mb-2"><strong>Optional columns:</strong> amount_usd, remarks</p>
+        <p class="mb-0 text-muted">Date format supported: YYYY-MM-DD, DD-MM-YYYY, MM-DD-YYYY. Vendor must be pre-added in Vendor Master.</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('main.import_expenses_csv') }}" enctype="multipart/form-data" class="card p-3">
+        <div class="form-group mb-3">
+            <label for="file">CSV File</label>
+            <input type="file" class="form-control-file" id="file" name="file" accept=".csv" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Import</button>
+        <a href="{{ url_for('main.expenses') }}" class="btn btn-secondary">Back</a>
+    </form>
+</div>
+{% endblock %}

@@ -19,15 +19,27 @@
                     <tr>
                         <td>{{ user.id }}</td>
                         <td>{{ user.username }}</td>
-                        <td>{{ 'Super user' if user.username == 'Admin' else 'Normal User' }}</td>
+                        <td>{{ 'Super user' if user.is_super_admin else user.access_label }}</td>
                         <td>
-                            {% if user.username != 'Admin' %}
-                                {% if current_user.username == 'Admin' %}
+                            {% if not user.is_super_admin %}
+                                {% if current_user.can_manage_users %}
                                     <a href="{{ url_for('main.reset_password', user_id=user.id) }}" class="btn btn-warning btn-sm">Reset Password</a>
+                                    <form method="POST" action="{{ url_for('main.set_user_access', user_id=user.id) }}" style="display:inline;">
+                                        <select name="role" class="form-control form-control-sm d-inline-block" style="width:auto;">
+                                            <option value="normal_user" {% if user.role == 'normal_user' %}selected{% endif %}>Normal User</option>
+                                            <option value="read_only" {% if user.role == 'read_only' %}selected{% endif %}>Read Only (View Only)</option>
+                                            <option value="full_control" {% if user.role == 'full_control' %}selected{% endif %}>1. Full Control</option>
+                                            <option value="full_control_no_delete" {% if user.role == 'full_control_no_delete' %}selected{% endif %}>2. Full Control (No Delete Item/User)</option>
+                                            <option value="full_control_no_delete_no_add_user" {% if user.role == 'full_control_no_delete_no_add_user' %}selected{% endif %}>3. Full Control (No Delete + No Add User)</option>
+                                        </select>
+                                        <button type="submit" class="btn btn-primary btn-sm">Grant Access</button>
+                                    </form>
                                 {% endif %}
+                                {% if current_user.can_delete_users %}
                                 <form method="POST" action="{{ url_for('main.delete_user', user_id=user.id) }}" style="display:inline;">
                                     <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                                 </form>
+                                {% endif %}
                             {% else %}
                                 <button class="btn btn-secondary btn-sm" disabled>Cannot Delete</button>
                             {% endif %}

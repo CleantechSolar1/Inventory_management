@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-3">Add Repair Record</h2>
+    <form method="POST" action="{{ url_for('main.add_repair') }}">
+        {{ form.hidden_tag() }}
+        <div class="row">
+            <div class="col-md-4">{{ form.asset_tag.label }} {{ form.asset_tag(class="form-control") }}</div>
+            <div class="col-md-4">{{ form.serial_number.label }} {{ form.serial_number(class="form-control") }}</div>
+            <div class="col-md-4">{{ form.brand.label }} {{ form.brand(class="form-control") }}</div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-md-4">{{ form.model.label }} {{ form.model(class="form-control") }}</div>
+            <div class="col-md-4">{{ form.part.label }} {{ form.part(class="form-control") }}</div>
+            <div class="col-md-4">{{ form.issue_description.label }} {{ form.issue_description(class="form-control") }}</div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-md-4">{{ form.repair_date.label }} {{ form.repair_date(class="form-control") }}</div>
+            <div class="col-md-4">{{ form.registered_date.label }} {{ form.registered_date(class="form-control") }}</div>
+            <div class="col-md-4">{{ form.repaired_under_warranty.label }} {{ form.repaired_under_warranty(class="form-select") }}</div>
+        </div>
+        <button type="submit" class="btn btn-success mt-4">Submit</button>
+        <a href="{{ url_for('main.repairs') }}" class="btn btn-secondary mt-4">Cancel</a>
+    </form>
+</div>
+{% endblock %}

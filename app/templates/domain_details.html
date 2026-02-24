@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Domain Details</h2>
+    <p>
+        <strong>Domain:</strong> {{ domain.domain }} |
+        <strong>Purchase Date:</strong> {{ domain.purchase_date }} |
+        <strong>Renewal Date:</strong> {{ domain.renewal_date }} |
+        <strong>Country:</strong> {{ domain.country or '-' }} |
+        <strong>Amount:</strong> {{ domain.amount or '-' }} |
+        <strong>Last Renewal:</strong> {{ domain.last_renewal_date or '-' }}
+    </p>
+
+    <h5>Renewal History</h5>
+    {% if renewals %}
+    <table class="table table-sm table-bordered">
+        <thead>
+            <tr>
+                <th>Renewal Date</th>
+                <th>Amount</th>
+                <th>Remarks</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for renewal in renewals %}
+            <tr>
+                <td>{{ renewal.renewal_date }}</td>
+                <td>{{ renewal.amount or '-' }}</td>
+                <td>{{ renewal.remarks or '-' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No renewals added yet.</p>
+    {% endif %}
+
+    {% if current_user.can_manage_licenses %}
+    <h5 class="mt-4">Add Renewal</h5>
+    <form method="POST" action="{{ url_for('main.domain_details', domain_id=domain.id) }}">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="renewal_date">Renewal Date</label>
+                    <input type="date" class="form-control" id="renewal_date" name="renewal_date" required>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="amount">Amount</label>
+                    <input type="number" step="0.01" class="form-control" id="amount" name="amount">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="remarks">Remarks</label>
+                    <input type="text" class="form-control" id="remarks" name="remarks">
+                </div>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Add Renewal</button>
+    </form>
+    {% endif %}
+
+    <a href="{{ url_for('main.domains') }}" class="btn btn-secondary mt-4">Back to Domains</a>
+</div>
+{% endblock %}

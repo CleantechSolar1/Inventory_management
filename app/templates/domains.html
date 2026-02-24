@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container my-4">
+    <h1>Domains</h1>
+    <div class="mb-3">
+        {% if current_user.can_manage_licenses %}
+        <a href="{{ url_for('main.add_domain') }}" class="btn btn-primary">Add Domain</a>
+        {% endif %}
+        <a href="{{ url_for('main.licenses') }}" class="btn btn-info">Licenses</a>
+        <a href="{{ url_for('main.home') }}" class="btn btn-secondary">Back to Home</a>
+    </div>
+
+    {% if domains %}
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Domain</th>
+                <th>Purchase Date</th>
+                <th>Renewal Date</th>
+                <th>Country</th>
+                <th>Amount</th>
+                <th>Last Renewal</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for domain in domains %}
+            <tr>
+                <td>{{ domain.domain }}</td>
+                <td>{{ domain.purchase_date }}</td>
+                <td>{{ domain.renewal_date }}</td>
+                <td>{{ domain.country or '-' }}</td>
+                <td>{{ domain.amount or '-' }}</td>
+                <td>{{ domain.last_renewal_date or '-' }}</td>
+                <td>
+                    <a href="{{ url_for('main.domain_details', domain_id=domain.id) }}" class="btn btn-info btn-sm">Details</a>
+                    {% if current_user.can_manage_licenses %}
+                    <a href="{{ url_for('main.edit_domain', domain_id=domain.id) }}" class="btn btn-warning btn-sm">Edit</a>
+                    <form method="POST" action="{{ url_for('main.delete_domain', domain_id=domain.id) }}" style="display:inline;">
+                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this domain?');">Delete</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No domains found.</p>
+    {% endif %}
+</div>
+{% endblock %}
