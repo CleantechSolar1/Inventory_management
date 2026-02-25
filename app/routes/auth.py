@@ -13,8 +13,8 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         username = form.username.data
-        password = (form.password.data or '')strip.()
-        user = User.query.filter(func.lower(user.username) == username.lower()).first()
+        password = form.password.data
+        user = User.query.filter_by(username=username).first()
         if user and check_password_hash(user.password_hash, password):
             login_user(user)
             flash('Logged in successfully.', 'success')
