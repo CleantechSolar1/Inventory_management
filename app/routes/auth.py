@@ -12,7 +12,7 @@ auth = Blueprint('auth', __name__)
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        username = form.username.data
+        username = form.username.data.strip()
         password = form.password.data
         user = User.query.filter_by(username=username).first()
         if user and check_password_hash(user.password_hash, password):

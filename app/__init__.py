@@ -189,12 +189,20 @@ def create_app():
         _ensure_license_schema()
         _ensure_expense_schema()
 
-        # Create users if they don't exist
+        # Create Admin user if missing, and optionally sync password from env.
+        admin_user = User.query.filter_by(username='Admin').first()
+        configured_admin_password = os.getenv('ADMIN_PASSWORD')
 
-        if not User.query.filter_by(username='Admin').first():
-            Admin = User(username='Admin', role='full_control')
-            Admin.set_password(os.getenv('ADMIN_PASSWORD', 'Admin@123'))
-            db.session.add(Admin)
+        if not admin_user:
+            admin_user = User(username='Admin', role='full_control')
+            admin_user.set_password(configured_admin_password or 'Admin@123')
+            db.session.add(admin_user)
+        elif configured_admin_password:
+            has_password = bool(admin_user.password_hash)
+            password_matches = has_password and admin_user.check_password(configured_admin_password)
+            if not password_matches:
+                admin_user.set_password(configured_admin_password)
+                app.logger.info('Admin password synchronized from ADMIN_PASSWORD environment variable.')
 
         db.session.commit()
 
