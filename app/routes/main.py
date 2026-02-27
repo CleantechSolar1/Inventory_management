@@ -9,7 +9,7 @@ from app.models import Inventory, Log, User, Repair, PreUser, RepairHistory
 from app.forms import InventoryForm, RepairForm
 from datetime import datetime, timedelta
 from flask import render_template, redirect, url_for, request, flash
-from app.forms import ResetPasswordForm  # Create this form as needed
+from app.forms import ResetPasswordForm, ChangePasswordForm  # Create this form as needed
 from werkzeug.security import generate_password_hash
 from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
@@ -937,6 +937,26 @@ def reset_password(user_id):
         form = ResetPasswordForm()
     return render_template('reset_password.html', form=form, user=user)
 
+@main.route('/change_password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    form = ChangePasswordForm()
+    if form.validate_on_submit():
+        if not current_user.check_password(form.current_password.data):
+            flash('Current password is incorrect.', 'danger')
+            return render_template('change_password.html', form=form)
+
+        if form.current_password.data == form.new_password.data:
+            flash('New password must be different from current password.', 'danger')
+            return render_template('change_password.html', form=form)
+
+        current_user.set_password(form.new_password.data)
+        log_user_activity('Password changed', f'username={current_user.username}')
+        db.session.commit()
+        flash('Password changed successfully.', 'success')
+        return redirect(url_for('main.home'))
+
+    return render_template('change_password.html', form=form)
 
 @main.route('/import_csv', methods=['GET', 'POST'])
 @login_required
