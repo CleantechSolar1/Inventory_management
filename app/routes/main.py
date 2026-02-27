@@ -1941,6 +1941,10 @@ def delete_expense_vendor(vendor_id):
 @main.route('/expenses/budget', methods=['POST'])
 @login_required
 def set_expense_budget():
+    if not current_user.is_super_admin:
+        flash('Only Admin can set yearly budgets.', 'danger')
+        return redirect(url_for('main.expenses'))
+        
     blocked_response = block_read_only('set yearly budgets')
     if blocked_response:
         return blocked_response
