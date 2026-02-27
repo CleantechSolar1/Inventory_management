@@ -47,6 +47,15 @@ class ResetPasswordForm(FlaskForm):
     new_password = PasswordField('New Password', validators=[DataRequired(), Length(min=6)])
     submit = SubmitField('Reset Password')
 
+class ChangePasswordForm(FlaskForm):
+    current_password = PasswordField('Current Password', validators=[DataRequired()])
+    new_password = PasswordField('New Password', validators=[DataRequired(), Length(min=6)])
+    confirm_new_password = PasswordField(
+        'Confirm New Password',
+        validators=[DataRequired(), EqualTo('new_password', message='Passwords must match.')]
+    )
+    submit = SubmitField('Change Password')
+
 class RepairForm(FlaskForm):
     asset_tag = StringField('Asset Tag', validators=[DataRequired()])
     serial_number = StringField('Serial Number', validators=[DataRequired()])
