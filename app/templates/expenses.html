@@ -118,7 +118,7 @@
             <div class="card mb-3">
                 <div class="card-header">Year-wise Budget (USD)</div>
                 <div class="card-body">
-                    {% if current_user.can_manage_expenses %}
+                    {% if current_user.is_super_admin %}
                     <form method="POST" action="{{ url_for('main.set_expense_budget') }}" class="mb-3">
                         <div class="form-group">
                             <label for="year">Year</label>
