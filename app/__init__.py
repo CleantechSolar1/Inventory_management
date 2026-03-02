@@ -155,6 +155,14 @@ def _ensure_expense_schema():
 def create_app():
     app = Flask(__name__)
     app.config.from_object('config.Config')
+    app.config.update(
+        SESSION_COOKIE_SAMESITE="None",
+        SESSION_COOKIE_SECURE=True,
+        REMEMBER_COOKIE_SAMESITE="None",
+        REMEMBER_COOKIE_SECURE=True,
+        WTF_CSRF_TIME_LIMIT=None,
+    )
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
     # Initialize extensions
     db.init_app(app)
