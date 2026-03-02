@@ -9,7 +9,7 @@ from app.models import Inventory, Log, User, Repair, PreUser, RepairHistory
 from app.forms import InventoryForm, RepairForm
 from datetime import datetime, timedelta
 from flask import render_template, redirect, url_for, request, flash
-from app.forms import ResetPasswordForm, ChangePasswordForm  # Create this form as needed
+from app.forms import ResetPasswordForm, ChangePasswordForm
 from werkzeug.security import generate_password_hash
 from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
@@ -20,6 +20,7 @@ logging.basicConfig(level=logging.DEBUG)
 from app.models import License, LicenseDetails, LicenseRenewal, Domain, DomainRenewal, Expense, ExpenseVendor, ExpenseBudget, db
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
+from wtforms.validators import Optional
 
 # Define the main Blueprint
 main = Blueprint('main', __name__)
@@ -228,12 +229,12 @@ def add_item():
             last_asset = (
                 Inventory.query
                 .filter_by(asset_type=form.asset_type.data)
-                .order_by(Inventory.id.desc())  # or order_by asset_tag if more appropriate
+                .order_by(Inventory.id.asc())  # or order_by asset_tag if more appropriate
                 .first()
             )
 
             # Extract numeric suffix
-            START_NUMBER = 459  # fallback start number if no previous asset exists
+            START_NUMBER = 485  # fallback start number if no previous asset exists
             if last_asset:
                 # Get last 4 digits of asset_tag
                 try:
@@ -361,6 +362,13 @@ def edit_item(item_id):
     form.country.choices = [(ct, ct) for ct in COUNTRIES]
     form.vendor_location.choices = [(vl, vl) for vl in VENDOR_LOCATIONS]
 
+    # Non-elevated users cannot edit these fields and they are not rendered in the template.
+    # Mark them optional so form validation does not fail on POST.
+    if not current_user.is_elevated:
+        form.model.validators = [Optional()]
+        form.fa_code.validators = [Optional()]
+        form.serial_number.validators = [Optional()]
+
     if form.validate_on_submit():
         old_data = {field.name: getattr(item, field.name) for field in item.__table__.columns}
         
@@ -382,22 +390,36 @@ def edit_item(item_id):
             if old_data[field.name] != new_value:
                 changes[field.name] = {'old': old_data[field.name], 'new': new_value}
 
-        db.session.commit()
+        try:
+            # Save item update and its audit log in one transaction.
+            log = Log(
+                user_id=current_user.id,
+                action="Updated item",
+                item_id=item.id,
+                serial_number=item.serial_number,
+                changes=str(changes)
+            )
+            db.session.add(log)
+            db.session.commit()
+            current_app.logger.info(
+                f'{current_user.username} updated item: {item.asset_tag} with serial number: {item.serial_number}'
+            )
+            flash('Item updated successfully!', 'success')
+            return redirect(url_for('main.home'))
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.exception(
+                f'Error updating item {item.id} by {current_user.username}: {str(e)}'
+            )
+            flash('An error occurred while updating the item. Please try again.', 'danger')
 
-        # Log the update
-        log = Log(
-            user_id=current_user.id,
-            action="Updated item",
-            item_id=item.id,
-            serial_number=item.serial_number,
-            changes=str(changes)
+    elif request.method == 'POST':
+        current_app.logger.warning(
+            f'Edit form validation failed for user {current_user.username}, item {item_id}: {form.errors}'
         )
-        db.session.add(log)
-        db.session.commit()
-
-        current_app.logger.info(f'{current_user.username} updated item: {item.asset_tag} with serial number: {item.serial_number}')
-        flash('Item updated successfully!', 'success')
-        return redirect(url_for('main.home'))
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f"Error in {getattr(form, field).label.text}: {error}", 'danger')
 
     return render_template(
         'edit_item.html',
@@ -937,6 +959,7 @@ def reset_password(user_id):
         form = ResetPasswordForm()
     return render_template('reset_password.html', form=form, user=user)
 
+
 @main.route('/change_password', methods=['GET', 'POST'])
 @login_required
 def change_password():
@@ -957,6 +980,7 @@ def change_password():
         return redirect(url_for('main.home'))
 
     return render_template('change_password.html', form=form)
+
 
 @main.route('/import_csv', methods=['GET', 'POST'])
 @login_required
@@ -1964,7 +1988,7 @@ def set_expense_budget():
     if not current_user.is_super_admin:
         flash('Only Admin can set yearly budgets.', 'danger')
         return redirect(url_for('main.expenses'))
-        
+
     blocked_response = block_read_only('set yearly budgets')
     if blocked_response:
         return blocked_response
