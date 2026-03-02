@@ -162,7 +162,11 @@ def create_app():
         REMEMBER_COOKIE_SECURE=True,
         WTF_CSRF_TIME_LIMIT=None,
     )
-    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+    try:
+        from werkzeug.middleware.proxy_fix import ProxyFix
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+    except Exception as exc:
+        app.logger.warning("ProxyFix not applied: %s", exc)
 
     # Initialize extensions
     db.init_app(app)
