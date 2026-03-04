@@ -1,12 +1,34 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, DateField, TextAreaField, IntegerField, SelectField, HiddenField, DecimalField
-from wtforms.validators import DataRequired, Length, EqualTo, ValidationError, Optional
+from wtforms.validators import DataRequired, Length, EqualTo, ValidationError, Optional, Regexp
 from app.models import User
 
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Login')
+
+
+class MFAVerifyForm(FlaskForm):
+    otp = StringField(
+        'One-Time Password',
+        validators=[
+            DataRequired(),
+            Regexp(r'^\d{6}$', message='Enter the 6-digit code from your authenticator app.')
+        ],
+    )
+    submit = SubmitField('Verify')
+
+
+class MFASetupForm(FlaskForm):
+    otp = StringField(
+        'Authenticator Code',
+        validators=[
+            DataRequired(),
+            Regexp(r'^\d{6}$', message='Enter the 6-digit code from your authenticator app.')
+        ],
+    )
+    submit = SubmitField('Enable MFA')
 
 class InventoryForm(FlaskForm):
     asset_tag = HiddenField()
