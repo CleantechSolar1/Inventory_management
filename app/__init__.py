@@ -1,10 +1,11 @@
 import os
 import logging
+from datetime import datetime
 from logging.handlers import RotatingFileHandler
-from flask import Flask
+from flask import Flask, redirect, request, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from flask_login import LoginManager
+from flask_login import LoginManager, current_user
 from config import Config
 from sqlalchemy import inspect, text
 
@@ -45,10 +46,6 @@ def _ensure_user_role_column():
             db.session.execute(text(
                 "ALTER TABLE `user` ADD COLUMN role VARCHAR(64) NOT NULL DEFAULT 'normal_user'"
             ))
-        elif db.engine.dialect.name == 'postgresql':
-            db.session.execute(text(
-                "ALTER TABLE \"user\" ADD COLUMN role VARCHAR(64) NOT NULL DEFAULT 'normal_user'"
-            ))
         elif db.engine.dialect.name == 'sqlite':
             db.session.execute(text(
                 "ALTER TABLE user ADD COLUMN role VARCHAR(64) DEFAULT 'normal_user'"
@@ -66,10 +63,94 @@ def _ensure_user_role_column():
         ))
     else:
         db.session.execute(text(
-            "UPDATE \"user\" SET role='normal_user' WHERE role IS NULL OR TRIM(role)=''"
+            "UPDATE user SET role='normal_user' WHERE role IS NULL OR TRIM(role)=''"
         ))
         db.session.execute(text(
-            "UPDATE \"user\" SET role='full_control' WHERE username='Admin'"
+            "UPDATE user SET role='full_control' WHERE username='Admin'"
+        ))
+    db.session.commit()
+
+
+def _ensure_user_mfa_columns():
+    inspector = inspect(db.engine)
+
+    if 'user' not in inspector.get_table_names():
+        return
+
+    user_columns = {column.get('name') for column in inspector.get_columns('user')}
+    missing_columns = []
+    for column_name, mysql_type, sqlite_type in [
+        ('mfa_required', 'BOOLEAN NOT NULL DEFAULT 1', 'BOOLEAN DEFAULT 1'),
+        ('mfa_enabled', 'BOOLEAN NOT NULL DEFAULT 0', 'BOOLEAN DEFAULT 0'),
+        ('mfa_secret', 'VARCHAR(32) NULL', 'VARCHAR(32)'),
+        ('mfa_created_at', 'DATETIME NULL', 'DATETIME'),
+    ]:
+        if column_name not in user_columns:
+            missing_columns.append((column_name, mysql_type, sqlite_type))
+
+    for column_name, mysql_type, sqlite_type in missing_columns:
+        if db.engine.dialect.name == 'mysql':
+            db.session.execute(text(f"ALTER TABLE `user` ADD COLUMN {column_name} {mysql_type}"))
+        elif db.engine.dialect.name == 'sqlite':
+            db.session.execute(text(f"ALTER TABLE user ADD COLUMN {column_name} {sqlite_type}"))
+
+    if missing_columns:
+        db.session.commit()
+
+    if db.engine.dialect.name == 'mysql':
+        db.session.execute(text(
+            "UPDATE `user` SET mfa_required=1 WHERE mfa_required IS NULL"
+        ))
+        db.session.execute(text(
+            "UPDATE `user` SET mfa_enabled=0 WHERE mfa_enabled IS NULL"
+        ))
+    else:
+        db.session.execute(text(
+            "UPDATE user SET mfa_required=1 WHERE mfa_required IS NULL"
+        ))
+        db.session.execute(text(
+            "UPDATE user SET mfa_enabled=0 WHERE mfa_enabled IS NULL"
+        ))
+    db.session.commit()
+
+
+def _ensure_user_password_policy_columns():
+    inspector = inspect(db.engine)
+
+    if 'user' not in inspector.get_table_names():
+        return
+
+    user_columns = {column.get('name') for column in inspector.get_columns('user')}
+    missing_columns = []
+    for column_name, mysql_type, sqlite_type in [
+        ('must_change_password', 'BOOLEAN NOT NULL DEFAULT 0', 'BOOLEAN DEFAULT 0'),
+        ('password_changed_at', 'DATETIME NULL', 'DATETIME'),
+    ]:
+        if column_name not in user_columns:
+            missing_columns.append((column_name, mysql_type, sqlite_type))
+
+    for column_name, mysql_type, sqlite_type in missing_columns:
+        if db.engine.dialect.name == 'mysql':
+            db.session.execute(text(f"ALTER TABLE `user` ADD COLUMN {column_name} {mysql_type}"))
+        elif db.engine.dialect.name == 'sqlite':
+            db.session.execute(text(f"ALTER TABLE user ADD COLUMN {column_name} {sqlite_type}"))
+
+    if missing_columns:
+        db.session.commit()
+
+    if db.engine.dialect.name == 'mysql':
+        db.session.execute(text(
+            "UPDATE `user` SET must_change_password=0 WHERE must_change_password IS NULL"
+        ))
+        db.session.execute(text(
+            "UPDATE `user` SET password_changed_at=UTC_TIMESTAMP() WHERE password_changed_at IS NULL"
+        ))
+    else:
+        db.session.execute(text(
+            "UPDATE user SET must_change_password=0 WHERE must_change_password IS NULL"
+        ))
+        db.session.execute(text(
+            "UPDATE user SET password_changed_at=CURRENT_TIMESTAMP WHERE password_changed_at IS NULL"
         ))
     db.session.commit()
 
@@ -188,6 +269,28 @@ def create_app():
     app.register_blueprint(auth_blueprint)
     app.register_blueprint(main_blueprint)
 
+    @app.before_request
+    def _enforce_security_policies():
+        if not current_user.is_authenticated:
+            return None
+
+        endpoint = request.endpoint or ''
+        if endpoint == 'static' or endpoint == 'auth.logout':
+            return None
+
+        max_age_days = app.config.get('PASSWORD_MAX_AGE_DAYS', 90)
+        if current_user.is_password_change_required(max_age_days=max_age_days):
+            if endpoint != 'main.change_password':
+                return redirect(url_for('main.change_password'))
+            return None
+
+        if current_user.mfa_required and not current_user.has_mfa_configured:
+            if endpoint != 'auth.mfa_setup':
+                return redirect(url_for('auth.mfa_setup'))
+            return None
+
+        return None
+
     print(app.url_map)
 
     with app.app_context():
@@ -198,23 +301,19 @@ def create_app():
         db.create_all()
         _ensure_user_password_hash_size()
         _ensure_user_role_column()
+        _ensure_user_mfa_columns()
+        _ensure_user_password_policy_columns()
         _ensure_license_schema()
         _ensure_expense_schema()
 
-        # Create Admin user if missing, and optionally sync password from env.
-        admin_user = User.query.filter_by(username='Admin').first()
-        configured_admin_password = os.getenv('ADMIN_PASSWORD')
+        # Create users if they don't exist
 
-        if not admin_user:
-            admin_user = User(username='Admin', role='full_control')
-            admin_user.set_password(configured_admin_password or 'Admin@123')
-            db.session.add(admin_user)
-        elif configured_admin_password:
-            has_password = bool(admin_user.password_hash)
-            password_matches = has_password and admin_user.check_password(configured_admin_password)
-            if not password_matches:
-                admin_user.set_password(configured_admin_password)
-                app.logger.info('Admin password synchronized from ADMIN_PASSWORD environment variable.')
+        if not User.query.filter_by(username='Admin').first():
+            Admin = User(username='Admin', role='full_control')
+            Admin.set_password(os.getenv('ADMIN_PASSWORD', 'Admin@123'))
+            Admin.must_change_password = False
+            Admin.password_changed_at = datetime.utcnow()
+            db.session.add(Admin)
 
         db.session.commit()
 
