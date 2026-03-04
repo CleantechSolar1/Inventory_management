@@ -90,20 +90,27 @@ def _ensure_user_mfa_columns():
 
     user_columns = {column.get('name') for column in inspector.get_columns('user')}
     missing_columns = []
-    for column_name, mysql_type, sqlite_type in [
-        ('mfa_required', 'BOOLEAN NOT NULL DEFAULT 1', 'BOOLEAN DEFAULT 1'),
-        ('mfa_enabled', 'BOOLEAN NOT NULL DEFAULT 0', 'BOOLEAN DEFAULT 0'),
-        ('mfa_secret', 'VARCHAR(32) NULL', 'VARCHAR(32)'),
-        ('mfa_created_at', 'DATETIME NULL', 'DATETIME'),
+    for column_name, mysql_type, sqlite_type, postgres_type in [
+        ('mfa_required', 'BOOLEAN NOT NULL DEFAULT 1', 'BOOLEAN DEFAULT 1', 'BOOLEAN DEFAULT TRUE'),
+        ('mfa_enabled', 'BOOLEAN NOT NULL DEFAULT 0', 'BOOLEAN DEFAULT 0', 'BOOLEAN DEFAULT FALSE'),
+        ('mfa_secret', 'VARCHAR(32) NULL', 'VARCHAR(32)', 'VARCHAR(32)'),
+        ('mfa_created_at', 'DATETIME NULL', 'DATETIME', 'TIMESTAMP'),
     ]:
         if column_name not in user_columns:
-            missing_columns.append((column_name, mysql_type, sqlite_type))
+            if column_name == 'mfa_required':
+                postgres_type = 'BOOLEAN DEFAULT TRUE'
+            elif column_name == 'mfa_enabled':
+                postgres_type = 'BOOLEAN DEFAULT FALSE'
+            elif column_name == 'mfa_secret':
+                postgres_type = 'VARCHAR(32)'
+            else:
+                postgres_type = 'TIMESTAMP'
+            missing_columns.append((column_name, mysql_type, sqlite_type, postgres_type))
 
-    for column_name, mysql_type, sqlite_type in missing_columns:
+    for column_name, mysql_type, sqlite_type, postgres_type in missing_columns:
         if db.engine.dialect.name == 'mysql':
             db.session.execute(text(f"ALTER TABLE `user` ADD COLUMN {column_name} {mysql_type}"))
         elif db.engine.dialect.name == 'postgresql':
-            postgres_type = sqlite_type.replace('DATETIME', 'TIMESTAMP')
             db.session.execute(text(f"ALTER TABLE \"user\" ADD COLUMN {column_name} {postgres_type}"))
         elif db.engine.dialect.name == 'sqlite':
             db.session.execute(text(f"ALTER TABLE user ADD COLUMN {column_name} {sqlite_type}"))
@@ -120,10 +127,10 @@ def _ensure_user_mfa_columns():
         ))
     elif db.engine.dialect.name == 'postgresql':
         db.session.execute(text(
-            "UPDATE \"user\" SET mfa_required=1 WHERE mfa_required IS NULL"
+            "UPDATE \"user\" SET mfa_required=TRUE WHERE mfa_required IS NULL"
         ))
         db.session.execute(text(
-            "UPDATE \"user\" SET mfa_enabled=0 WHERE mfa_enabled IS NULL"
+            "UPDATE \"user\" SET mfa_enabled=FALSE WHERE mfa_enabled IS NULL"
         ))
     else:
         db.session.execute(text(
@@ -143,18 +150,21 @@ def _ensure_user_password_policy_columns():
 
     user_columns = {column.get('name') for column in inspector.get_columns('user')}
     missing_columns = []
-    for column_name, mysql_type, sqlite_type in [
-        ('must_change_password', 'BOOLEAN NOT NULL DEFAULT 0', 'BOOLEAN DEFAULT 0'),
-        ('password_changed_at', 'DATETIME NULL', 'DATETIME'),
+    for column_name, mysql_type, sqlite_type, postgres_type in [
+        ('must_change_password', 'BOOLEAN NOT NULL DEFAULT 0', 'BOOLEAN DEFAULT 0', 'BOOLEAN DEFAULT FALSE'),
+        ('password_changed_at', 'DATETIME NULL', 'DATETIME', 'TIMESTAMP'),
     ]:
         if column_name not in user_columns:
-            missing_columns.append((column_name, mysql_type, sqlite_type))
+            if column_name == 'must_change_password':
+                postgres_type = 'BOOLEAN DEFAULT FALSE'
+            else:
+                postgres_type = 'TIMESTAMP'
+            missing_columns.append((column_name, mysql_type, sqlite_type, postgres_type))
 
-    for column_name, mysql_type, sqlite_type in missing_columns:
+    for column_name, mysql_type, sqlite_type, postgres_type in missing_columns:
         if db.engine.dialect.name == 'mysql':
             db.session.execute(text(f"ALTER TABLE `user` ADD COLUMN {column_name} {mysql_type}"))
         elif db.engine.dialect.name == 'postgresql':
-            postgres_type = sqlite_type.replace('DATETIME', 'TIMESTAMP')
             db.session.execute(text(f"ALTER TABLE \"user\" ADD COLUMN {column_name} {postgres_type}"))
         elif db.engine.dialect.name == 'sqlite':
             db.session.execute(text(f"ALTER TABLE user ADD COLUMN {column_name} {sqlite_type}"))
@@ -171,7 +181,7 @@ def _ensure_user_password_policy_columns():
         ))
     elif db.engine.dialect.name == 'postgresql':
         db.session.execute(text(
-            "UPDATE \"user\" SET must_change_password=0 WHERE must_change_password IS NULL"
+            "UPDATE \"user\" SET must_change_password=FALSE WHERE must_change_password IS NULL"
         ))
         db.session.execute(text(
             "UPDATE \"user\" SET password_changed_at=NOW() WHERE password_changed_at IS NULL"
