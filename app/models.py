@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
@@ -17,6 +17,12 @@ class User(db.Model, UserMixin):
     # Werkzeug scrypt hashes are longer than 128 chars.
     password_hash = db.Column(db.String(255))
     role = db.Column(db.String(64), nullable=False, default=ROLE_NORMAL_USER)
+    mfa_required = db.Column(db.Boolean, nullable=False, default=True)
+    mfa_enabled = db.Column(db.Boolean, nullable=False, default=False)
+    mfa_secret = db.Column(db.String(32), nullable=True)
+    mfa_created_at = db.Column(db.DateTime, nullable=True)
+    must_change_password = db.Column(db.Boolean, nullable=False, default=False)
+    password_changed_at = db.Column(db.DateTime, nullable=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -43,6 +49,21 @@ class User(db.Model, UserMixin):
     @property
     def can_manage_users(self):
         return self.is_elevated
+
+    @property
+    def can_revoke_mfa(self):
+        return self.is_super_admin
+
+    @property
+    def has_mfa_configured(self):
+        return bool(self.mfa_enabled and self.mfa_secret)
+
+    def is_password_change_required(self, max_age_days=90):
+        if self.must_change_password:
+            return True
+        if not self.password_changed_at:
+            return True
+        return datetime.utcnow() >= self.password_changed_at + timedelta(days=max_age_days)
 
     @property
     def can_add_users(self):
