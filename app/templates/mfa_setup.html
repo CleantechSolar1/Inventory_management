@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h2 class="h4 mb-3">Multi-Factor Authentication</h2>
+
+                    {% if mfa_enabled %}
+                        <div class="alert alert-success mb-0" role="alert">
+                            MFA is enabled on your account.
+                        </div>
+                    {% else %}
+                        <p class="mb-3">Scan this in Google Authenticator, Microsoft Authenticator, or Authy.</p>
+                        <div class="mb-3">
+                            <label class="font-weight-bold">Manual setup key</label>
+                            <input class="form-control" value="{{ mfa_secret }}" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="font-weight-bold">OTP URI (advanced)</label>
+                            <textarea class="form-control" rows="2" readonly>{{ otpauth_url }}</textarea>
+                        </div>
+                        <form method="POST">
+                            {{ form.hidden_tag() }}
+                            <div class="form-group">
+                                {{ form.otp.label(class="form-label") }}
+                                {{ form.otp(class="form-control", placeholder="123456", autocomplete="one-time-code", inputmode="numeric") }}
+                                {% for error in form.otp.errors %}
+                                    <small class="text-danger d-block mt-1">{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

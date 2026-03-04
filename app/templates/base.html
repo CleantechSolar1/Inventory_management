@@ -27,6 +27,9 @@
         <li class="nav-item {% if request.endpoint == 'main.change_password' %}active{% endif %}">
             <a class="nav-link" href="{{ url_for('main.change_password') }}">Change Password</a>
         </li>
+        <li class="nav-item {% if request.endpoint == 'auth.mfa_setup' %}active{% endif %}">
+            <a class="nav-link" href="{{ url_for('auth.mfa_setup') }}">MFA Setup</a>
+        </li>
         <li class="nav-item">
             <a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a>
         </li>
@@ -43,9 +46,10 @@
         <li class="nav-item position-relative">
             <a class="nav-link" href="{{ url_for('main.notifications') }}">
                 <i class="fas fa-bell"></i>
-                {% if expiring_assets_count > 0 %}
+                {% set expiring_count = expiring_assets_count|default(0, true) %}
+                {% if expiring_count > 0 %}
                 <span class="badge badge-danger position-absolute" style="top: 2px; right: 0px;">
-                    {{ expiring_assets_count }}
+                    {{ expiring_count }}
                 </span>
                 {% endif %}
             </a>

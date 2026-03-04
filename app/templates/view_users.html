@@ -11,6 +11,7 @@
                         <th>ID</th>
                         <th>Username</th>
                         <th>Access</th>
+                        <th>MFA</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -21,9 +22,20 @@
                         <td>{{ user.username }}</td>
                         <td>{{ 'Super user' if user.is_super_admin else user.access_label }}</td>
                         <td>
+                            {% if not user.mfa_required %}
+                                <span class="badge badge-secondary">Disabled by Admin</span>
+                            {% elif user.has_mfa_configured %}
+                                <span class="badge badge-success">Enabled</span>
+                            {% else %}
+                                <span class="badge badge-warning">Required (Pending Setup)</span>
+                            {% endif %}
+                        </td>
+                        <td>
                             {% if not user.is_super_admin %}
                                 {% if current_user.can_manage_users %}
                                     <a href="{{ url_for('main.reset_password', user_id=user.id) }}" class="btn btn-warning btn-sm">Reset Password</a>
+                                {% endif %}
+                                {% if current_user.is_super_admin %}
                                     <form method="POST" action="{{ url_for('main.set_user_access', user_id=user.id) }}" style="display:inline;">
                                         <select name="role" class="form-control form-control-sm d-inline-block" style="width:auto;">
                                             <option value="normal_user" {% if user.role == 'normal_user' %}selected{% endif %}>Normal User</option>
@@ -35,12 +47,34 @@
                                         <button type="submit" class="btn btn-primary btn-sm">Grant Access</button>
                                     </form>
                                 {% endif %}
+                                {% if current_user.is_super_admin %}
+                                    {% if user.mfa_required %}
+                                    <form method="POST" action="{{ url_for('main.disable_user_mfa', user_id=user.id) }}" style="display:inline;">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">Disable MFA</button>
+                                    </form>
+                                    {% else %}
+                                    <form method="POST" action="{{ url_for('main.enable_user_mfa', user_id=user.id) }}" style="display:inline;">
+                                        <button type="submit" class="btn btn-outline-success btn-sm">Enable MFA</button>
+                                    </form>
+                                    {% endif %}
+                                {% endif %}
                                 {% if current_user.can_delete_users %}
                                 <form method="POST" action="{{ url_for('main.delete_user', user_id=user.id) }}" style="display:inline;">
                                     <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                                 </form>
                                 {% endif %}
                             {% else %}
+                                {% if current_user.is_super_admin %}
+                                    {% if user.mfa_required %}
+                                    <form method="POST" action="{{ url_for('main.disable_user_mfa', user_id=user.id) }}" style="display:inline;">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">Disable MFA</button>
+                                    </form>
+                                    {% else %}
+                                    <form method="POST" action="{{ url_for('main.enable_user_mfa', user_id=user.id) }}" style="display:inline;">
+                                        <button type="submit" class="btn btn-outline-success btn-sm">Enable MFA</button>
+                                    </form>
+                                    {% endif %}
+                                {% endif %}
                                 <button class="btn btn-secondary btn-sm" disabled>Cannot Delete</button>
                             {% endif %}
                         </td>

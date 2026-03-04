@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block body_class %}login-page{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+    <div class="auth-card">
+        <div class="text-center mb-3">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="auth-logo mb-2">
+            <h1 class="auth-title">Verify Login</h1>
+            <p class="auth-subtitle">Enter the 6-digit code for {{ username }}</p>
+        </div>
+        <form method="POST" class="login-form">
+            {{ form.hidden_tag() }}
+            <div class="form-group mb-4">
+                {{ form.otp.label(class="form-label") }}
+                {{ form.otp(class="form-control", placeholder="123456", autocomplete="one-time-code", inputmode="numeric") }}
+                {% for error in form.otp.errors %}
+                    <small class="text-danger d-block mt-1">{{ error }}</small>
+                {% endfor %}
+            </div>
+            {{ form.submit(class="btn btn-primary btn-block") }}
+        </form>
+    </div>
+</div>
+{% endblock %}
