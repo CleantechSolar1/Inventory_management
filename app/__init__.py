@@ -46,6 +46,10 @@ def _ensure_user_role_column():
             db.session.execute(text(
                 "ALTER TABLE `user` ADD COLUMN role VARCHAR(64) NOT NULL DEFAULT 'normal_user'"
             ))
+        elif db.engine.dialect.name == 'postgresql':
+            db.session.execute(text(
+                "ALTER TABLE \"user\" ADD COLUMN role VARCHAR(64) DEFAULT 'normal_user'"
+            ))
         elif db.engine.dialect.name == 'sqlite':
             db.session.execute(text(
                 "ALTER TABLE user ADD COLUMN role VARCHAR(64) DEFAULT 'normal_user'"
@@ -60,6 +64,13 @@ def _ensure_user_role_column():
         ))
         db.session.execute(text(
             "UPDATE `user` SET role='full_control' WHERE username='Admin'"
+        ))
+    elif db.engine.dialect.name == 'postgresql':
+        db.session.execute(text(
+            "UPDATE \"user\" SET role='normal_user' WHERE role IS NULL OR TRIM(role)=''"
+        ))
+        db.session.execute(text(
+            "UPDATE \"user\" SET role='full_control' WHERE username='Admin'"
         ))
     else:
         db.session.execute(text(
@@ -91,6 +102,9 @@ def _ensure_user_mfa_columns():
     for column_name, mysql_type, sqlite_type in missing_columns:
         if db.engine.dialect.name == 'mysql':
             db.session.execute(text(f"ALTER TABLE `user` ADD COLUMN {column_name} {mysql_type}"))
+        elif db.engine.dialect.name == 'postgresql':
+            postgres_type = sqlite_type.replace('DATETIME', 'TIMESTAMP')
+            db.session.execute(text(f"ALTER TABLE \"user\" ADD COLUMN {column_name} {postgres_type}"))
         elif db.engine.dialect.name == 'sqlite':
             db.session.execute(text(f"ALTER TABLE user ADD COLUMN {column_name} {sqlite_type}"))
 
@@ -103,6 +117,13 @@ def _ensure_user_mfa_columns():
         ))
         db.session.execute(text(
             "UPDATE `user` SET mfa_enabled=0 WHERE mfa_enabled IS NULL"
+        ))
+    elif db.engine.dialect.name == 'postgresql':
+        db.session.execute(text(
+            "UPDATE \"user\" SET mfa_required=1 WHERE mfa_required IS NULL"
+        ))
+        db.session.execute(text(
+            "UPDATE \"user\" SET mfa_enabled=0 WHERE mfa_enabled IS NULL"
         ))
     else:
         db.session.execute(text(
@@ -132,6 +153,9 @@ def _ensure_user_password_policy_columns():
     for column_name, mysql_type, sqlite_type in missing_columns:
         if db.engine.dialect.name == 'mysql':
             db.session.execute(text(f"ALTER TABLE `user` ADD COLUMN {column_name} {mysql_type}"))
+        elif db.engine.dialect.name == 'postgresql':
+            postgres_type = sqlite_type.replace('DATETIME', 'TIMESTAMP')
+            db.session.execute(text(f"ALTER TABLE \"user\" ADD COLUMN {column_name} {postgres_type}"))
         elif db.engine.dialect.name == 'sqlite':
             db.session.execute(text(f"ALTER TABLE user ADD COLUMN {column_name} {sqlite_type}"))
 
@@ -144,6 +168,13 @@ def _ensure_user_password_policy_columns():
         ))
         db.session.execute(text(
             "UPDATE `user` SET password_changed_at=UTC_TIMESTAMP() WHERE password_changed_at IS NULL"
+        ))
+    elif db.engine.dialect.name == 'postgresql':
+        db.session.execute(text(
+            "UPDATE \"user\" SET must_change_password=0 WHERE must_change_password IS NULL"
+        ))
+        db.session.execute(text(
+            "UPDATE \"user\" SET password_changed_at=NOW() WHERE password_changed_at IS NULL"
         ))
     else:
         db.session.execute(text(
