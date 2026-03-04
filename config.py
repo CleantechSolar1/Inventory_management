@@ -15,6 +15,8 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'your_default_secret_key')
+    MFA_ISSUER_NAME = os.getenv('MFA_ISSUER_NAME', 'Inventory Management System')
+    PASSWORD_MAX_AGE_DAYS = int(os.getenv('PASSWORD_MAX_AGE_DAYS', '90'))
 
     # Prefer Render/12-factor style DATABASE_URL when present.
     _database_url = os.getenv('DATABASE_URL')
