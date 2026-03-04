@@ -587,6 +587,12 @@ def add_user():
             return redirect(url_for('main.add_user'))
         new_user = User(username=username, role=User.ROLE_NORMAL_USER)
         new_user.set_password(password)
+        new_user.mfa_required = True
+        new_user.must_change_password = True
+        new_user.password_changed_at = None
+        new_user.mfa_enabled = False
+        new_user.mfa_secret = None
+        new_user.mfa_created_at = None
         db.session.add(new_user)
         db.session.commit()
         
@@ -644,14 +650,11 @@ def view_users():
 @main.route('/set_user_access/<int:user_id>', methods=['POST'])
 @login_required
 def set_user_access(user_id):
-    if not current_user.can_manage_users:
-        flash('You do not have permission to manage user access.', 'danger')
+    if not current_user.is_super_admin:
+        flash('Only Admin can change user access.', 'danger')
         return redirect(url_for('main.home'))
 
     user = User.query.get_or_404(user_id)
-    if user.is_super_admin:
-        flash('Superuser access cannot be modified.', 'danger')
-        return redirect(url_for('main.view_users'))
 
     new_role = request.form.get('role', User.ROLE_NORMAL_USER)
     allowed_roles = {
@@ -678,6 +681,59 @@ def set_user_access(user_id):
     db.session.commit()
 
     flash(f'Access updated for {user.username}.', 'success')
+    return redirect(url_for('main.view_users'))
+
+
+@main.route('/disable_user_mfa/<int:user_id>', methods=['POST'])
+@login_required
+def disable_user_mfa(user_id):
+    if not current_user.is_super_admin:
+        flash('Only Admin can disable MFA for users.', 'danger')
+        return redirect(url_for('main.view_users'))
+
+    user = User.query.get_or_404(user_id)
+
+    user.mfa_required = False
+    user.mfa_enabled = False
+    user.mfa_secret = None
+    user.mfa_created_at = None
+
+    log = Log(
+        user_id=current_user.id,
+        action='Disabled user MFA',
+        item_id=None,
+        changes=f'Disabled MFA for user: {user.username}'
+    )
+    db.session.add(log)
+    db.session.commit()
+
+    flash(f'MFA disabled for {user.username}.', 'success')
+    return redirect(url_for('main.view_users'))
+
+
+@main.route('/enable_user_mfa/<int:user_id>', methods=['POST'])
+@login_required
+def enable_user_mfa(user_id):
+    if not current_user.is_super_admin:
+        flash('Only Admin can enable MFA for users.', 'danger')
+        return redirect(url_for('main.view_users'))
+
+    user = User.query.get_or_404(user_id)
+    user.mfa_required = True
+    if not user.mfa_secret:
+        user.mfa_enabled = False
+        user.mfa_created_at = None
+
+    log = Log(
+        user_id=current_user.id,
+        action='Enabled user MFA',
+        item_id=None,
+        changes=f'Enabled MFA policy for user: {user.username}'
+    )
+    db.session.add(log)
+    db.session.commit()
+
+    flash(f'MFA enabled for {user.username}. They must set up MFA if not already configured.', 'success')
     return redirect(url_for('main.view_users'))
 
 
@@ -950,6 +1006,8 @@ def reset_password(user_id):
         form = ResetPasswordForm(request.form)
         if form.validate():
             user.password_hash = generate_password_hash(form.new_password.data)
+            user.must_change_password = True
+            user.password_changed_at = None
             db.session.commit()
             flash('Password reset successfully!', 'success')
             return redirect(url_for('main.view_users'))
@@ -974,6 +1032,8 @@ def change_password():
             return render_template('change_password.html', form=form)
 
         current_user.set_password(form.new_password.data)
+        current_user.must_change_password = False
+        current_user.password_changed_at = datetime.utcnow()
         log_user_activity('Password changed', f'username={current_user.username}')
         db.session.commit()
         flash('Password changed successfully.', 'success')
