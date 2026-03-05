@@ -229,7 +229,7 @@ def add_item():
             last_asset = (
                 Inventory.query
                 .filter_by(asset_type=form.asset_type.data)
-                .order_by(Inventory.id.asc())  # or order_by asset_tag if more appropriate
+                .order_by(Inventory.id.desc())  # or order_by asset_tag if more appropriate
                 .first()
             )
 
