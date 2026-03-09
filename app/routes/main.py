@@ -86,7 +86,7 @@ def home():
     items_query = Inventory.query
 
     # Filters
-    search_query = request.args.get('search_query', '')
+    search_query = request.args.get('search_query', '').strip()
     asset_type_filter = request.args.get('asset_type')
     department_filter = request.args.get('department')
     country_filter = request.args.get('country')
@@ -98,13 +98,14 @@ def home():
 
     # Apply search query if provided
     if search_query:
+        pattern = f'%{search_query}%'
         items_query = items_query.filter(
-            Inventory.asset_tag.contains(search_query) |
-            Inventory.brand.contains(search_query) |
-            Inventory.model.contains(search_query) |
-            Inventory.current_owner.contains(search_query) |
-            Inventory.previous_owner.contains(search_query) |
-            Inventory.serial_number.contains(search_query)
+            Inventory.asset_tag.ilike(pattern) |
+            Inventory.brand.ilike(pattern) |
+            Inventory.model.ilike(pattern) |
+            Inventory.current_owner.ilike(pattern) |
+            Inventory.previous_owner.ilike(pattern) |
+            Inventory.serial_number.ilike(pattern)
         )
 
     if asset_type_filter:
@@ -229,7 +230,7 @@ def add_item():
             last_asset = (
                 Inventory.query
                 .filter_by(asset_type=form.asset_type.data)
-                .order_by(Inventory.id.desc())  # or order_by asset_tag if more appropriate
+                .order_by(Inventory.id.asc())  # or order_by asset_tag if more appropriate
                 .first()
             )
 
