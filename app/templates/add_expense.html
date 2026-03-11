@@ -6,6 +6,22 @@
         <div class="row">
             <div class="col-md-3">
                 <div class="form-group">
+                    <label for="expense_type">Type</label>
+                    <select class="form-control" id="expense_type" name="expense_type" required>
+                        <option value="">Select</option>
+                        <option value="Capex">Capex</option>
+                        <option value="Opex">Opex</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="invoice_number">Invoice Number</label>
+                    <input type="text" class="form-control" id="invoice_number" name="invoice_number" required>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
                     <label for="category">Category</label>
                     <select class="form-control" id="category" name="category" required>
                         <option value="">Select</option>
@@ -56,6 +72,18 @@
             </div>
             <div class="col-md-3">
                 <div class="form-group">
+                    <label for="occurrence_mode">Occurrence Mode</label>
+                    <select class="form-control" id="occurrence_mode" name="occurrence_mode" required>
+                        <option value="">Select</option>
+                        <option value="Monthly">Monthly</option>
+                        <option value="Quarterly">Quarterly</option>
+                        <option value="Half-yearly">Half-yearly</option>
+                        <option value="Yearly">Yearly</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
                     <label for="vendor">Vendor</label>
                     <input type="text" class="form-control" id="vendor" name="vendor" list="vendor_list" autocomplete="off" required>
                     <datalist id="vendor_list">
@@ -70,6 +98,20 @@
                 <div class="form-group">
                     <label for="cleantech_entity">Cleantech Entity</label>
                     <input type="text" class="form-control" id="cleantech_entity" name="cleantech_entity" required>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="country">Country</label>
+                    <select class="form-control" id="country" name="country" required>
+                        <option value="">Select</option>
+                        <option value="India">India</option>
+                        <option value="Singapore">Singapore</option>
+                        <option value="Thailand">Thailand</option>
+                        <option value="Vietnam">Vietnam</option>
+                        <option value="Malaysia">Malaysia</option>
+                        <option value="Indonesia">Indonesia</option>
+                    </select>
                 </div>
             </div>
             <div class="col-md-3">
@@ -94,8 +136,8 @@
             </div>
             <div class="col-md-3">
                 <div class="form-group">
-                    <label for="amount_usd">Amount (USD)</label>
-                    <input type="number" step="0.01" class="form-control" id="amount_usd" name="amount_usd">
+                    <label for="amount_gst">Amount with GST</label>
+                    <input type="number" step="0.01" class="form-control" id="amount_gst" name="amount_gst" required>
                 </div>
             </div>
             <div class="col-md-3">
