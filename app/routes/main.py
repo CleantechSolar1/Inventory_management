@@ -1708,14 +1708,17 @@ def export_expenses_csv():
     output = StringIO()
     writer = csv.writer(output)
     writer.writerow([
-        'category', 'sub_category', 'name', 'payment_date', 'invoice_month', 'invoice_year',
-        'vendor', 'cleantech_entity', 'invoice_date', 'currency', 'amount', 'amount_usd',
+        'expense_type', 'invoice_number', 'category', 'sub_category', 'name', 'payment_date',
+        'invoice_month', 'invoice_year', 'vendor', 'cleantech_entity', 'invoice_date',
+        'occurrence_mode', 'country', 'currency', 'amount', 'amount_gst', 'amount_usd',
         'payment_mode', 'remarks', 'created_by', 'created_at', 'is_void', 'void_remarks',
         'voided_by', 'voided_at'
     ])
 
     for expense in expenses_list:
         writer.writerow([
+            expense.expense_type or '',
+            expense.invoice_number or '',
             expense.category,
             expense.sub_category,
             expense.name,
@@ -1725,8 +1728,11 @@ def export_expenses_csv():
             expense.vendor,
             expense.cleantech_entity,
             expense.invoice_date.strftime('%Y-%m-%d') if expense.invoice_date else '',
+            expense.occurrence_mode or '',
+            expense.country or '',
             expense.currency,
             expense.amount,
+            expense.amount_gst if expense.amount_gst is not None else '',
             expense.amount_usd if expense.amount_usd is not None else '',
             expense.payment_mode,
             expense.remarks or '',
@@ -1783,6 +1789,10 @@ def import_expenses_csv():
                 )
 
             alias_to_canonical = {
+                'expensetype': 'expense_type',
+                'expense_type': 'expense_type',
+                'invoicenumber': 'invoice_number',
+                'invoice_number': 'invoice_number',
                 'subcategory': 'sub_category',
                 'sub_category': 'sub_category',
                 'paymentdate': 'payment_date',
@@ -1795,6 +1805,10 @@ def import_expenses_csv():
                 'cleantech_entity': 'cleantech_entity',
                 'invoicedate': 'invoice_date',
                 'invoice_date': 'invoice_date',
+                'occurrencemode': 'occurrence_mode',
+                'occurrence_mode': 'occurrence_mode',
+                'amountwithgst': 'amount_gst',
+                'amount_gst': 'amount_gst',
                 'paymentmode': 'payment_mode',
                 'payment_mode': 'payment_mode',
                 'amountusd': 'amount_usd',
@@ -1809,9 +1823,10 @@ def import_expenses_csv():
                 normalized_to_original[canonical] = field
 
             required_columns = {
-                'category', 'sub_category', 'name', 'payment_date', 'invoice_month',
-                'invoice_year', 'vendor', 'cleantech_entity', 'invoice_date', 'currency',
-                'amount', 'payment_mode'
+                'expense_type', 'invoice_number', 'category', 'sub_category', 'name',
+                'payment_date', 'invoice_month', 'invoice_year', 'vendor', 'cleantech_entity',
+                'invoice_date', 'occurrence_mode', 'country', 'currency', 'amount',
+                'amount_gst', 'payment_mode'
             }
             missing_columns = required_columns - set(normalized_to_original.keys())
             if missing_columns:
@@ -1825,12 +1840,39 @@ def import_expenses_csv():
                 'others': {'others'},
             }
 
+            expense_type_map = {'capex': 'Capex', 'opex': 'Opex'}
+            occurrence_mode_map = {
+                'monthly': 'Monthly',
+                'monthy': 'Monthly',
+                'quarterly': 'Quarterly',
+                'half-yearly': 'Half-yearly',
+                'yearly': 'Yearly',
+            }
+            allowed_countries = {
+                'india': 'India',
+                'singapore': 'Singapore',
+                'thailand': 'Thailand',
+                'vietnam': 'Vietnam',
+                'malaysia': 'Malaysia',
+                'indonesia': 'Indonesia',
+            }
+
             imported_count = 0
             for idx, row in enumerate(reader, start=2):
                 normalized_row = {}
                 for k, v in row.items():
                     canonical = alias_to_canonical.get(normalize_header(k), normalize_header(k))
                     normalized_row[canonical] = v
+
+                expense_type_raw = (normalized_row.get('expense_type') or '').strip()
+                expense_type_key = expense_type_raw.lower()
+                if expense_type_key not in expense_type_map:
+                    raise ValueError(f'Row {idx}: invalid expense_type "{expense_type_raw}"')
+                expense_type = expense_type_map[expense_type_key]
+
+                invoice_number = (normalized_row.get('invoice_number') or '').strip()
+                if not invoice_number:
+                    raise ValueError(f'Row {idx}: invoice_number is required')
 
                 category = (normalized_row.get('category') or '').strip().lower()
                 sub_category = (normalized_row.get('sub_category') or '').strip()
@@ -1843,10 +1885,25 @@ def import_expenses_csv():
                 if not ExpenseVendor.query.filter(db.func.lower(ExpenseVendor.name) == vendor.lower()).first():
                     raise ValueError(f'Row {idx}: vendor "{vendor}" is not pre-added')
 
+                occurrence_mode_raw = (normalized_row.get('occurrence_mode') or '').strip()
+                occurrence_mode_key = occurrence_mode_raw.lower()
+                if occurrence_mode_key not in occurrence_mode_map:
+                    raise ValueError(f'Row {idx}: invalid occurrence_mode "{occurrence_mode_raw}"')
+                occurrence_mode = occurrence_mode_map[occurrence_mode_key]
+
+                country_raw = (normalized_row.get('country') or '').strip()
+                country_key = country_raw.lower()
+                if country_key not in allowed_countries:
+                    raise ValueError(f'Row {idx}: invalid country "{country_raw}"')
+                country = allowed_countries[country_key]
+
                 amount_val = normalized_row.get('amount')
+                amount_gst_val = normalized_row.get('amount_gst')
                 amount_usd_val = normalized_row.get('amount_usd')
 
                 expense = Expense(
+                    expense_type=expense_type,
+                    invoice_number=invoice_number,
                     category=category,
                     sub_category=sub_category,
                     name=(normalized_row.get('name') or '').strip(),
@@ -1856,8 +1913,11 @@ def import_expenses_csv():
                     vendor=vendor,
                     cleantech_entity=(normalized_row.get('cleantech_entity') or '').strip(),
                     invoice_date=parse_csv_date(normalized_row.get('invoice_date')),
+                    occurrence_mode=occurrence_mode,
+                    country=country,
                     currency=(normalized_row.get('currency') or '').strip(),
                     amount=Decimal(amount_val) if amount_val not in (None, '') else None,
+                    amount_gst=Decimal(amount_gst_val) if amount_gst_val not in (None, '') else None,
                     amount_usd=Decimal(amount_usd_val) if amount_usd_val not in (None, '') else None,
                     payment_mode=(normalized_row.get('payment_mode') or '').strip(),
                     remarks=((normalized_row.get('remarks') or '').strip() or None),
@@ -1865,9 +1925,11 @@ def import_expenses_csv():
                 )
 
                 if not all([
-                    expense.category, expense.sub_category, expense.name, expense.payment_date,
-                    expense.invoice_month, expense.invoice_year, expense.vendor, expense.cleantech_entity,
-                    expense.invoice_date, expense.currency, expense.amount, expense.payment_mode
+                    expense.expense_type, expense.invoice_number, expense.category,
+                    expense.sub_category, expense.name, expense.payment_date, expense.invoice_month,
+                    expense.invoice_year, expense.vendor, expense.cleantech_entity,
+                    expense.invoice_date, expense.occurrence_mode, expense.country,
+                    expense.currency, expense.amount, expense.amount_gst, expense.payment_mode
                 ]):
                     raise ValueError(f'Row {idx}: required fields are missing')
 
@@ -1902,6 +1964,8 @@ def add_expense():
 
     if request.method == 'POST':
         try:
+            expense_type_raw = request.form.get('expense_type', '').strip()
+            invoice_number = request.form.get('invoice_number', '').strip()
             category = request.form.get('category', '').strip().lower()
             sub_category = request.form.get('sub_category', '').strip()
             name = request.form.get('name', '').strip()
@@ -1911,11 +1975,34 @@ def add_expense():
             vendor = request.form.get('vendor', '').strip()
             cleantech_entity = request.form.get('cleantech_entity', '').strip()
             invoice_date = parse_iso_date(request.form.get('invoice_date'))
+            occurrence_mode_raw = request.form.get('occurrence_mode', '').strip()
+            country_raw = request.form.get('country', '').strip()
             currency = request.form.get('currency', '').strip()
             amount = Decimal(request.form.get('amount')) if request.form.get('amount') else None
+            amount_gst = Decimal(request.form.get('amount_gst')) if request.form.get('amount_gst') else None
             amount_usd = Decimal(request.form.get('amount_usd')) if request.form.get('amount_usd') else None
             payment_mode = request.form.get('payment_mode', '').strip()
             remarks = request.form.get('remarks', '').strip() or None
+
+            expense_type_map = {'capex': 'Capex', 'opex': 'Opex'}
+            occurrence_mode_map = {
+                'monthly': 'Monthly',
+                'monthy': 'Monthly',
+                'quarterly': 'Quarterly',
+                'half-yearly': 'Half-yearly',
+                'yearly': 'Yearly',
+            }
+            allowed_countries = {
+                'india': 'India',
+                'singapore': 'Singapore',
+                'thailand': 'Thailand',
+                'vietnam': 'Vietnam',
+                'malaysia': 'Malaysia',
+                'indonesia': 'Indonesia',
+            }
+            expense_type_key = expense_type_raw.lower()
+            occurrence_mode_key = occurrence_mode_raw.lower()
+            country_key = country_raw.lower()
 
             allowed_map = {
                 'hardware': {'laptop', 'monitor', 'tv', 'cable', 'remote', 'charger', 'connector'},
@@ -1924,7 +2011,11 @@ def add_expense():
                 'others': {'others'},
             }
 
-            if not all([category, sub_category, name, payment_date, invoice_month, invoice_year, vendor, cleantech_entity, invoice_date, currency, amount, payment_mode]):
+            if not all([
+                expense_type_raw, invoice_number, category, sub_category, name, payment_date,
+                invoice_month, invoice_year, vendor, cleantech_entity, invoice_date,
+                occurrence_mode_raw, country_raw, currency, amount, amount_gst, payment_mode
+            ]):
                 flash('All fields are required.', 'danger')
                 return redirect(url_for('main.add_expense'))
             if not ExpenseVendor.query.filter(db.func.lower(ExpenseVendor.name) == vendor.lower()).first():
@@ -1936,8 +2027,19 @@ def add_expense():
             if sub_category.lower() not in allowed_map[category]:
                 flash('Invalid sub-category for selected category.', 'danger')
                 return redirect(url_for('main.add_expense'))
+            if expense_type_key not in expense_type_map:
+                flash('Invalid expense type.', 'danger')
+                return redirect(url_for('main.add_expense'))
+            if occurrence_mode_key not in occurrence_mode_map:
+                flash('Invalid occurrence mode.', 'danger')
+                return redirect(url_for('main.add_expense'))
+            if country_key not in allowed_countries:
+                flash('Invalid country.', 'danger')
+                return redirect(url_for('main.add_expense'))
 
             expense = Expense(
+                expense_type=expense_type_map[expense_type_key],
+                invoice_number=invoice_number,
                 category=category,
                 sub_category=sub_category,
                 name=name,
@@ -1947,8 +2049,11 @@ def add_expense():
                 vendor=vendor,
                 cleantech_entity=cleantech_entity,
                 invoice_date=invoice_date,
+                occurrence_mode=occurrence_mode_map[occurrence_mode_key],
+                country=allowed_countries[country_key],
                 currency=currency,
                 amount=amount,
+                amount_gst=amount_gst,
                 amount_usd=amount_usd,
                 payment_mode=payment_mode,
                 remarks=remarks,
