@@ -249,9 +249,14 @@ def _ensure_expense_schema():
     expense_columns = {column.get('name') for column in inspector.get_columns('expense')}
     missing_columns = []
     for column_name, mysql_type, sqlite_type in [
+        ('expense_type', "VARCHAR(10) NULL", "VARCHAR(10)"),
+        ('invoice_number', "VARCHAR(100) NULL", "VARCHAR(100)"),
         ('category', "VARCHAR(50) NOT NULL DEFAULT 'others'", "VARCHAR(50)"),
         ('sub_category', "VARCHAR(100) NOT NULL DEFAULT 'others'", "VARCHAR(100)"),
+        ('occurrence_mode', "VARCHAR(20) NULL", "VARCHAR(20)"),
+        ('country', "VARCHAR(50) NULL", "VARCHAR(50)"),
         ('amount_usd', 'DECIMAL(12,2) NULL', 'NUMERIC'),
+        ('amount_gst', 'DECIMAL(12,2) NULL', 'NUMERIC'),
         ('remarks', 'TEXT NULL', 'TEXT'),
     ]:
         if column_name not in expense_columns:
