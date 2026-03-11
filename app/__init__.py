@@ -248,25 +248,27 @@ def _ensure_expense_schema():
 
     expense_columns = {column.get('name') for column in inspector.get_columns('expense')}
     missing_columns = []
-    for column_name, mysql_type, sqlite_type in [
-        ('expense_type', "VARCHAR(10) NULL", "VARCHAR(10)"),
-        ('invoice_number', "VARCHAR(100) NULL", "VARCHAR(100)"),
-        ('category', "VARCHAR(50) NOT NULL DEFAULT 'others'", "VARCHAR(50)"),
-        ('sub_category', "VARCHAR(100) NOT NULL DEFAULT 'others'", "VARCHAR(100)"),
-        ('occurrence_mode', "VARCHAR(20) NULL", "VARCHAR(20)"),
-        ('country', "VARCHAR(50) NULL", "VARCHAR(50)"),
-        ('amount_usd', 'DECIMAL(12,2) NULL', 'NUMERIC'),
-        ('amount_gst', 'DECIMAL(12,2) NULL', 'NUMERIC'),
-        ('remarks', 'TEXT NULL', 'TEXT'),
+    for column_name, mysql_type, sqlite_type, pg_type in [
+        ('expense_type', "VARCHAR(10) NULL", "VARCHAR(10)", "VARCHAR(10)"),
+        ('invoice_number', "VARCHAR(100) NULL", "VARCHAR(100)", "VARCHAR(100)"),
+        ('category', "VARCHAR(50) NOT NULL DEFAULT 'others'", "VARCHAR(50)", "VARCHAR(50)"),
+        ('sub_category', "VARCHAR(100) NOT NULL DEFAULT 'others'", "VARCHAR(100)", "VARCHAR(100)"),
+        ('occurrence_mode', "VARCHAR(20) NULL", "VARCHAR(20)", "VARCHAR(20)"),
+        ('country', "VARCHAR(50) NULL", "VARCHAR(50)", "VARCHAR(50)"),
+        ('amount_usd', 'DECIMAL(12,2) NULL', 'NUMERIC', 'NUMERIC(12,2)'),
+        ('amount_gst', 'DECIMAL(12,2) NULL', 'NUMERIC', 'NUMERIC(12,2)'),
+        ('remarks', 'TEXT NULL', 'TEXT', 'TEXT'),
     ]:
         if column_name not in expense_columns:
-            missing_columns.append((column_name, mysql_type, sqlite_type))
+            missing_columns.append((column_name, mysql_type, sqlite_type, pg_type))
 
-    for column_name, mysql_type, sqlite_type in missing_columns:
+    for column_name, mysql_type, sqlite_type, pg_type in missing_columns:
         if db.engine.dialect.name == 'mysql':
             db.session.execute(text(f"ALTER TABLE `expense` ADD COLUMN {column_name} {mysql_type}"))
         elif db.engine.dialect.name == 'sqlite':
             db.session.execute(text(f"ALTER TABLE expense ADD COLUMN {column_name} {sqlite_type}"))
+        elif db.engine.dialect.name == 'postgresql':
+            db.session.execute(text(f"ALTER TABLE expense ADD COLUMN IF NOT EXISTS {column_name} {pg_type}"))
     if missing_columns:
         db.session.commit()
 
