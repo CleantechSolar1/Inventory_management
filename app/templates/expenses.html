@@ -64,6 +64,7 @@
                             <th>Currency</th>
                             <th>Amount</th>
                             <th>Amount (GST)</th>
+                            <th>Amount (USD)</th>
                             <th>Payment Mode</th>
                             <th>Remarks</th>
                             <th>Created By</th>
@@ -92,6 +93,7 @@
                             <td>{{ expense.currency }}</td>
                             <td>{{ expense.amount }}</td>
                             <td>{{ expense.amount_gst if expense.amount_gst is not none else '-' }}</td>
+                            <td>{{ expense.amount_usd or '-' }}</td>
                             <td>{{ expense.payment_mode }}</td>
                             <td>{{ expense.remarks or '-' }}</td>
                             <td>{{ expense.created_by }}</td>
@@ -115,7 +117,7 @@
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="24" class="text-center">No expense entries found.</td>
+                            <td colspan="25" class="text-center">No expense entries found.</td>
                         </tr>
                         {% endfor %}
                     </tbody>
