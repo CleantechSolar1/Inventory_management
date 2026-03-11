@@ -237,6 +237,8 @@ class DomainRenewal(db.Model):
 
 class Expense(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    expense_type = db.Column(db.String(10), nullable=True, index=True)
+    invoice_number = db.Column(db.String(100), nullable=True, index=True)
     category = db.Column(db.String(50), nullable=False, index=True)
     sub_category = db.Column(db.String(100), nullable=False, index=True)
     name = db.Column(db.String(255), nullable=False, index=True)
@@ -246,8 +248,11 @@ class Expense(db.Model):
     vendor = db.Column(db.String(255), nullable=False, index=True)
     cleantech_entity = db.Column(db.String(255), nullable=False, index=True)
     invoice_date = db.Column(db.Date, nullable=False)
+    occurrence_mode = db.Column(db.String(20), nullable=True)
+    country = db.Column(db.String(50), nullable=True, index=True)
     currency = db.Column(db.String(10), nullable=False)
     amount = db.Column(db.Numeric(12, 2), nullable=False)
+    amount_gst = db.Column(db.Numeric(12, 2), nullable=True)
     amount_usd = db.Column(db.Numeric(12, 2), nullable=True)
     payment_mode = db.Column(db.String(50), nullable=False)
     remarks = db.Column(db.Text, nullable=True)
