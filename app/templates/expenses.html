@@ -48,6 +48,8 @@
                 <table class="table table-bordered table-sm">
                     <thead>
                         <tr>
+                            <th>Type</th>
+                            <th>Invoice Number</th>
                             <th>Category</th>
                             <th>Sub Category</th>
                             <th>Name</th>
@@ -57,9 +59,11 @@
                             <th>Vendor</th>
                             <th>Cleantech Entity</th>
                             <th>Invoice Date</th>
+                            <th>Occurrence</th>
+                            <th>Country</th>
                             <th>Currency</th>
                             <th>Amount</th>
-                            <th>Amount (USD)</th>
+                            <th>Amount (GST)</th>
                             <th>Payment Mode</th>
                             <th>Remarks</th>
                             <th>Created By</th>
@@ -72,6 +76,8 @@
                     <tbody>
                         {% for expense in expenses %}
                         <tr class="{% if expense.is_void %}table-danger{% endif %}">
+                            <td>{{ expense.expense_type or '-' }}</td>
+                            <td>{{ expense.invoice_number or '-' }}</td>
                             <td>{{ expense.category }}</td>
                             <td>{{ expense.sub_category }}</td>
                             <td>{{ expense.name }}</td>
@@ -81,9 +87,11 @@
                             <td>{{ expense.vendor }}</td>
                             <td>{{ expense.cleantech_entity }}</td>
                             <td>{{ expense.invoice_date }}</td>
+                            <td>{{ expense.occurrence_mode or '-' }}</td>
+                            <td>{{ expense.country or '-' }}</td>
                             <td>{{ expense.currency }}</td>
                             <td>{{ expense.amount }}</td>
-                            <td>{{ expense.amount_usd or '-' }}</td>
+                            <td>{{ expense.amount_gst if expense.amount_gst is not none else '-' }}</td>
                             <td>{{ expense.payment_mode }}</td>
                             <td>{{ expense.remarks or '-' }}</td>
                             <td>{{ expense.created_by }}</td>
@@ -107,7 +115,7 @@
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="19" class="text-center">No expense entries found.</td>
+                            <td colspan="24" class="text-center">No expense entries found.</td>
                         </tr>
                         {% endfor %}
                     </tbody>
