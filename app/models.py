@@ -158,7 +158,8 @@ class Inventory(db.Model):
     deleted_by = db.Column(db.String(100))
 
     # Relationship with Log model
-    logs = db.relationship('Log', backref='related_inventory', lazy=True, overlaps="log_entries,inventory")
+    logs = db.relationship('Log', back_populates='inventory', lazy=True)
+    log_entries = logs
 
 # Log Model
 class Log(db.Model):
@@ -174,7 +175,7 @@ class Log(db.Model):
     serial_number = db.Column(db.String(100), nullable=True)  # Matches Inventory serial_number for tracking
 
     # Relationship with Inventory for tracking history
-    inventory = db.relationship('Inventory', backref='log_entries', foreign_keys=[item_id], overlaps="logs,related_inventory")
+    inventory = db.relationship('Inventory', back_populates='logs', foreign_keys=[item_id])
 
 # License Model
 class License(db.Model):
