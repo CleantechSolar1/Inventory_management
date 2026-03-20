@@ -1853,6 +1853,9 @@ def import_expenses_csv():
                 'quarterly': 'Quarterly',
                 'half-yearly': 'Half-yearly',
                 'yearly': 'Yearly',
+                'one-time': 'One-Time',
+                'onetime': 'One-Time',
+                'one time': 'One-Time',
             }
             allowed_countries = {
                 'india': 'India',
@@ -1997,6 +2000,9 @@ def add_expense():
                 'quarterly': 'Quarterly',
                 'half-yearly': 'Half-yearly',
                 'yearly': 'Yearly',
+                'one-time': 'One-Time',
+                'onetime': 'One-Time',
+                'one time': 'One-Time',
             }
             allowed_countries = {
                 'india': 'India',
