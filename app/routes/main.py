@@ -1641,6 +1641,7 @@ def expenses():
     invoice_month = request.args.get('invoice_month', type=int)
     invoice_year = request.args.get('invoice_year', type=int)
     vendor = request.args.get('vendor', '').strip()
+    invoice_number = request.args.get('invoice_number', '').strip()
     cleantech_entity = request.args.get('cleantech_entity', '').strip()
 
     if search_name:
@@ -1651,6 +1652,8 @@ def expenses():
         query = query.filter(Expense.invoice_year == invoice_year)
     if vendor:
         query = query.filter(Expense.vendor.ilike(f'%{vendor}%'))
+    if invoice_number:
+        query = query.filter(Expense.invoice_number.ilike(f'%{invoice_number}%'))
     if cleantech_entity:
         query = query.filter(Expense.cleantech_entity.ilike(f'%{cleantech_entity}%'))
 
@@ -1690,6 +1693,7 @@ def export_expenses_csv():
     invoice_month = request.args.get('invoice_month', type=int)
     invoice_year = request.args.get('invoice_year', type=int)
     vendor = request.args.get('vendor', '').strip()
+    invoice_number = request.args.get('invoice_number', '').strip()
     cleantech_entity = request.args.get('cleantech_entity', '').strip()
 
     if search_name:
@@ -1700,6 +1704,8 @@ def export_expenses_csv():
         query = query.filter(Expense.invoice_year == invoice_year)
     if vendor:
         query = query.filter(Expense.vendor.ilike(f'%{vendor}%'))
+    if invoice_number:
+        query = query.filter(Expense.invoice_number.ilike(f'%{invoice_number}%'))
     if cleantech_entity:
         query = query.filter(Expense.cleantech_entity.ilike(f'%{cleantech_entity}%'))
 
