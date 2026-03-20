@@ -1834,7 +1834,7 @@ def import_expenses_csv():
                 return redirect(url_for('main.import_expenses_csv'))
 
             allowed_map = {
-                'hardware': {'laptop', 'monitor', 'tv', 'cable', 'remote', 'charger', 'connector', 'earphones'},
+                'hardware': {'laptop', 'monitor', 'tv', 'cable', 'remote', 'charger', 'connector', 'earphones', 'mouse', 'keyboard', 'camera', 'printer'},
                 'software': {'license', 'domain', 'domains'},
                 'bills': {'wifi bills', 'others'},
                 'others': {'others', 'bags'},
@@ -2005,7 +2005,7 @@ def add_expense():
             country_key = country_raw.lower()
 
             allowed_map = {
-                'hardware': {'laptop', 'monitor', 'tv', 'cable', 'remote', 'charger', 'connector', 'earphones'},
+                'hardware': {'laptop', 'monitor', 'tv', 'cable', 'remote', 'charger', 'connector', 'earphones', 'mouse', 'keyboard', 'camera', 'printer'},
                 'software': {'license', 'domain', 'domains'},
                 'bills': {'wifi bills', 'others'},
                 'others': {'others', 'bags'},
