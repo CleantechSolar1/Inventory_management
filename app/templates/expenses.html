@@ -32,6 +32,10 @@
                 <input type="text" class="form-control" name="vendor" id="vendor" value="{{ request.args.get('vendor', '') }}">
             </div>
             <div class="col-md-3 mb-2">
+                <label for="invoice_number">Invoice Number</label>
+                <input type="text" class="form-control" name="invoice_number" id="invoice_number" value="{{ request.args.get('invoice_number', '') }}">
+            </div>
+            <div class="col-md-3 mb-2">
                 <label for="cleantech_entity">Cleantech Entity</label>
                 <input type="text" class="form-control" name="cleantech_entity" id="cleantech_entity" value="{{ request.args.get('cleantech_entity', '') }}">
             </div>
