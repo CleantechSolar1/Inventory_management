@@ -71,6 +71,11 @@
 </head>
 <body>
     <h1>Import CSV</h1>
+    <div class="card p-3 mb-3">
+        <p class="mb-2"><strong>Required columns (order matters):</strong> asset_tag, asset_type, status, brand, model, fa_code, serial_number, operating_system, purchase_date, purchase_amount, age, current_owner</p>
+        <p class="mb-2"><strong>Optional columns (continue the same order):</strong> previous_owner, warranty_end_date, condition_notes, department, office, country, vendor_location</p>
+        <p class="mb-0 text-muted">Date formats supported: YYYY-MM-DD, DD-MM-YYYY, MM-DD-YYYY. Legacy format with one extra column after purchase_amount is also supported.</p>
+    </div>
     <form method="POST" enctype="multipart/form-data">
         <label for="file">Choose CSV file:</label>
         <input type="file" name="file" id="file" accept=".csv" required>

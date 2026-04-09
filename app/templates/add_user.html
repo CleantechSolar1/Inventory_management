@@ -5,6 +5,10 @@
     <h2>Add New User</h2>
     <form method="POST">
         <div class="form-group">
+            <label for="pre_user_search">Search Pre-User</label>
+            <input type="text" class="form-control" id="pre_user_search" list="pre-user-options" placeholder="Type name or email">
+        </div>
+        <div class="form-group">
             <label for="username">Username</label>
             <input type="text" class="form-control" id="username" name="username" required>
         </div>
@@ -18,4 +22,39 @@
         </div>
     </form>
 </div>
+
+<datalist id="pre-user-options">
+    {% for pre_user in pre_users %}
+    <option value="{{ pre_user.name }}{% if pre_user.email %} <{{ pre_user.email }}>{% endif %}" data-email="{{ pre_user.email or '' }}"></option>
+    {% endfor %}
+</datalist>
+
+<script>
+    (function () {
+        const input = document.getElementById('pre_user_search');
+        const usernameInput = document.getElementById('username');
+        const options = Array.from(document.querySelectorAll('#pre-user-options option'));
+        const optionMap = new Map();
+
+        options.forEach(function (option) {
+            const key = option.value.trim().toLowerCase();
+            optionMap.set(key, option.dataset.email || '');
+            const nameOnly = option.value.split('<')[0].trim().toLowerCase();
+            if (nameOnly) {
+                optionMap.set(nameOnly, option.dataset.email || '');
+            }
+        });
+
+        function syncUsername() {
+            const key = input.value.trim().toLowerCase();
+            const email = optionMap.get(key);
+            if (email) {
+                usernameInput.value = email;
+            }
+        }
+
+        input.addEventListener('input', syncUsername);
+        input.addEventListener('change', syncUsername);
+    })();
+</script>
 {% endblock %}

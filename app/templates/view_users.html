@@ -34,6 +34,9 @@
                             {% if not user.is_super_admin %}
                                 {% if current_user.can_manage_users %}
                                     <a href="{{ url_for('main.reset_password', user_id=user.id) }}" class="btn btn-warning btn-sm">Reset Password</a>
+                                    <form method="POST" action="{{ url_for('main.reset_user_mfa', user_id=user.id) }}" style="display:inline;">
+                                        <button type="submit" class="btn btn-outline-primary btn-sm">Reset MFA</button>
+                                    </form>
                                 {% endif %}
                                 {% if current_user.is_super_admin %}
                                     <form method="POST" action="{{ url_for('main.set_user_access', user_id=user.id) }}" style="display:inline;">
@@ -74,6 +77,11 @@
                                         <button type="submit" class="btn btn-outline-success btn-sm">Enable MFA</button>
                                     </form>
                                     {% endif %}
+                                {% endif %}
+                                {% if current_user.can_manage_users %}
+                                    <form method="POST" action="{{ url_for('main.reset_user_mfa', user_id=user.id) }}" style="display:inline;">
+                                        <button type="submit" class="btn btn-outline-primary btn-sm">Reset MFA</button>
+                                    </form>
                                 {% endif %}
                                 <button class="btn btn-secondary btn-sm" disabled>Cannot Delete</button>
                             {% endif %}

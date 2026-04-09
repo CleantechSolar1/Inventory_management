@@ -4,23 +4,38 @@
 <div class="container mt-4">
     <h2 class="mb-4">Manage Pre-Users</h2>
 
+    {% if current_user.is_super_admin %}
     <div class="card mb-4">
         <div class="card-header">Add Pre-User</div>
         <div class="card-body">
             <form method="POST" action="{{ url_for('main.manage_pre_users') }}">
                 <div class="form-row">
-                    <div class="form-group col-md-5">
+                    <div class="form-group col-md-4">
                         <label for="name">Name</label>
                         <input type="text" class="form-control" id="name" name="name" required>
                     </div>
-                    <div class="form-group col-md-5">
+                    <div class="form-group col-md-4">
+                        <label for="email">Email (Optional)</label>
+                        <input type="email" class="form-control" id="email" name="email">
+                    </div>
+                    <div class="form-group col-md-3">
                         <label for="department">Department (Optional)</label>
                         <input type="text" class="form-control" id="department" name="department">
                     </div>
-                    <div class="form-group col-md-2 d-flex align-items-end">
+                    <div class="form-group col-md-1 d-flex align-items-end">
                         <button type="submit" class="btn btn-primary w-100">Add</button>
                     </div>
                 </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">Sync from Microsoft 365</div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('main.sync_pre_users_from_azure') }}">
+                <p class="mb-3">Fetch member users from your Microsoft Entra ID tenant.</p>
+                <button type="submit" class="btn btn-info">Sync Users</button>
             </form>
         </div>
     </div>
@@ -34,7 +49,7 @@
                         <label for="file">CSV File</label>
                         <input type="file" class="form-control-file" id="file" name="file" accept=".csv" required>
                         <small class="form-text text-muted">
-                            Format: `name,department` (header optional). Department is optional.
+                            Format: `name,email,department` (header optional). Email and Department are optional.
                         </small>
                     </div>
                     <div class="form-group col-md-4 d-flex align-items-end">
@@ -44,15 +59,25 @@
             </form>
         </div>
     </div>
+    {% endif %}
 
     <div class="card">
         <div class="card-header">Pre-User List</div>
         <div class="card-body p-0">
+            <div class="p-3 border-bottom">
+                <form method="GET" action="{{ url_for('main.manage_pre_users') }}" class="form-inline">
+                    <div class="form-group mr-2">
+                        <input type="text" class="form-control" name="q" value="{{ search_query or '' }}" placeholder="Search name, email, department">
+                    </div>
+                    <button type="submit" class="btn btn-outline-primary">Search</button>
+                </form>
+            </div>
             <table class="table table-striped mb-0">
                 <thead>
                     <tr>
                         <th>ID</th>
                         <th>Name</th>
+                        <th>Email</th>
                         <th>Department</th>
                         <th>Created At</th>
                         <th>Actions</th>
@@ -63,17 +88,22 @@
                     <tr>
                         <td>{{ pre_user.id }}</td>
                         <td>{{ pre_user.name }}</td>
+                        <td>{{ pre_user.email or '-' }}</td>
                         <td>{{ pre_user.department or '-' }}</td>
                         <td>{{ pre_user.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                         <td>
+                            {% if current_user.is_super_admin %}
                             <form method="POST" action="{{ url_for('main.delete_pre_user', pre_user_id=pre_user.id) }}" style="display:inline;" onsubmit="return confirm('Delete this pre-user?');">
                                 <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                             </form>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="5" class="text-center">No pre-users added yet.</td>
+                        <td colspan="6" class="text-center">No pre-users added yet.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -82,19 +112,19 @@
             <nav class="m-3" aria-label="Pre-user pagination">
                 <ul class="pagination mb-0">
                     <li class="page-item {% if not pre_users_pagination.has_prev %}disabled{% endif %}">
-                        <a class="page-link" href="{{ url_for('main.manage_pre_users', page=pre_users_pagination.prev_num) if pre_users_pagination.has_prev else '#' }}">Previous</a>
+                        <a class="page-link" href="{{ url_for('main.manage_pre_users', page=pre_users_pagination.prev_num, q=search_query) if pre_users_pagination.has_prev else '#' }}">Previous</a>
                     </li>
                     {% for p in pre_users_pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=1) %}
                     {% if p %}
                     <li class="page-item {% if p == pre_users_pagination.page %}active{% endif %}">
-                        <a class="page-link" href="{{ url_for('main.manage_pre_users', page=p) }}">{{ p }}</a>
+                        <a class="page-link" href="{{ url_for('main.manage_pre_users', page=p, q=search_query) }}">{{ p }}</a>
                     </li>
                     {% else %}
                     <li class="page-item disabled"><span class="page-link">...</span></li>
                     {% endif %}
                     {% endfor %}
                     <li class="page-item {% if not pre_users_pagination.has_next %}disabled{% endif %}">
-                        <a class="page-link" href="{{ url_for('main.manage_pre_users', page=pre_users_pagination.next_num) if pre_users_pagination.has_next else '#' }}">Next</a>
+                        <a class="page-link" href="{{ url_for('main.manage_pre_users', page=pre_users_pagination.next_num, q=search_query) if pre_users_pagination.has_next else '#' }}">Next</a>
                     </li>
                 </ul>
             </nav>

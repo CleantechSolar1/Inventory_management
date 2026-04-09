@@ -315,7 +315,7 @@
 {% if current_user.can_assign_assets %}
 <datalist id="pre-user-options">
     {% for pre_user in pre_users %}
-    <option value="{{ pre_user.name }}" data-id="{{ pre_user.id }}"></option>
+    <option value="{{ pre_user.name }}" data-id="{{ pre_user.id }}" data-email="{{ pre_user.email or '' }}"></option>
     {% endfor %}
 </datalist>
 
