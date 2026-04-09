@@ -20,7 +20,9 @@ logging.basicConfig(level=logging.DEBUG)
 from app.models import License, LicenseDetails, LicenseRenewal, Domain, DomainRenewal, Expense, ExpenseVendor, ExpenseBudget, db
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import or_
 from wtforms.validators import Optional
+import requests
 
 # Define the main Blueprint
 main = Blueprint('main', __name__)
@@ -53,6 +55,13 @@ def parse_iso_date(value):
         return None
     return datetime.strptime(value, '%Y-%m-%d').date()
 
+def _coerce_log_value(value):
+    if isinstance(value, Decimal):
+        return str(value)
+    if hasattr(value, 'isoformat'):
+        return value.isoformat()
+    return value
+
 
 def log_user_activity(action, changes, item_id=None, serial_number=None):
     if not current_user.is_authenticated:
@@ -66,6 +75,50 @@ def log_user_activity(action, changes, item_id=None, serial_number=None):
             changes=changes
         )
     )
+
+
+def _get_graph_access_token():
+    tenant_id = current_app.config.get('AZURE_TENANT_ID')
+    client_id = current_app.config.get('AZURE_CLIENT_ID')
+    client_secret = current_app.config.get('AZURE_CLIENT_SECRET')
+
+    if not tenant_id or not client_id or not client_secret:
+        raise ValueError('Azure credentials are not configured.')
+
+    token_url = f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
+    data = {
+        'client_id': client_id,
+        'client_secret': client_secret,
+        'scope': 'https://graph.microsoft.com/.default',
+        'grant_type': 'client_credentials',
+    }
+    response = requests.post(token_url, data=data, timeout=20)
+    response.raise_for_status()
+    token = response.json().get('access_token')
+    if not token:
+        raise RuntimeError('No access token returned from Azure AD.')
+    return token
+
+
+def _fetch_graph_member_users(access_token):
+    url = (
+        "https://graph.microsoft.com/v1.0/users"
+        "?$select=displayName,userPrincipalName,userType,department"
+        "&$filter=userType eq 'Member'"
+    )
+    headers = {'Authorization': f'Bearer {access_token}'}
+    users = []
+
+    while url:
+        response = requests.get(url, headers=headers, timeout=20)
+        response.raise_for_status()
+        payload = response.json()
+        users.extend(payload.get('value', []))
+        url = payload.get('@odata.nextLink')
+
+    return users
+
+
 
 
 def recalculate_remaining_license(license_obj):
@@ -378,28 +431,44 @@ def edit_item(item_id):
         # Detect changes
         changes = {}
         for field in item.__table__.columns:
+            old_value = old_data[field.name]
             new_value = getattr(item, field.name)
-            if old_data[field.name] != new_value:
-                changes[field.name] = {'old': old_data[field.name], 'new': new_value}
+            if old_value != new_value:
+                changes[field.name] = {
+                    'old': _coerce_log_value(old_value),
+                    'new': _coerce_log_value(new_value)
+                }
 
         try:
-            # Save item update and its audit log in one transaction.
-            log = Log(
-                user_id=current_user.id,
-                action="Updated item",
-                item_id=item.id,
-                serial_number=item.serial_number,
-                changes=str(changes)
-            )
-            db.session.add(log)
             db.session.commit()
             current_app.logger.info(
                 f'{current_user.username} updated item: {item.asset_tag} with serial number: {item.serial_number}'
             )
+            if changes:
+                try:
+                    log = Log(
+                        user_id=current_user.id,
+                        action="Updated item",
+                        item_id=item.id,
+                        serial_number=item.serial_number,
+                        changes=str(changes)
+                    )
+                    db.session.add(log)
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+                    current_app.logger.exception(
+                        f'Failed to write audit log for item {item.id} after update.'
+                    )
             flash('Item updated successfully!', 'success')
             return redirect(url_for('main.home'))
         except Exception as e:
-            db.session.rollback()
+            try:
+                db.session.rollback()
+            except Exception:
+                current_app.logger.exception(
+                    f'Rollback failed after error updating item {item.id}.'
+                )
             current_app.logger.exception(
                 f'Error updating item {item.id} by {current_user.username}: {str(e)}'
             )
@@ -597,11 +666,13 @@ def add_user():
         )
         db.session.add(log)
         db.session.commit()
-        
+
         flash('User added successfully.', 'success')
+
         return redirect(url_for('main.home'))
     
-    return render_template('add_user.html')
+    pre_users = PreUser.query.order_by(PreUser.name.asc()).all()
+    return render_template('add_user.html', pre_users=pre_users)
 
 
 @main.route('/delete_user/<int:user_id>', methods=['POST'])
@@ -729,15 +800,47 @@ def enable_user_mfa(user_id):
     return redirect(url_for('main.view_users'))
 
 
+@main.route('/reset_user_mfa/<int:user_id>', methods=['POST'])
+@login_required
+def reset_user_mfa(user_id):
+    if not current_user.can_manage_users:
+        flash('You do not have permission to reset MFA for users.', 'danger')
+        return redirect(url_for('main.view_users'))
+
+    user = User.query.get_or_404(user_id)
+
+    user.mfa_required = True
+    user.mfa_enabled = False
+    user.mfa_secret = None
+    user.mfa_created_at = None
+
+    log = Log(
+        user_id=current_user.id,
+        action='Reset user MFA',
+        item_id=None,
+        changes=f'Reset MFA for user: {user.username}'
+    )
+    db.session.add(log)
+    db.session.commit()
+
+    flash(f'MFA reset for {user.username}. They must set it up again.', 'success')
+    return redirect(url_for('main.view_users'))
+
+
 @main.route('/pre_users', methods=['GET', 'POST'])
 @login_required
 def manage_pre_users():
-    if not current_user.can_add_users:
+    if not current_user.can_add_users and not current_user.is_super_admin:
         flash('You do not have permission to access this page.', 'danger')
         return redirect(url_for('main.home'))
 
     if request.method == 'POST':
+        if not current_user.is_super_admin:
+            flash('Only Admin can add pre-users.', 'danger')
+            return redirect(url_for('main.manage_pre_users'))
+
         name = request.form.get('name', '').strip()
+        email = request.form.get('email', '').strip().lower() or None
         department = request.form.get('department', '').strip() or None
 
         if not name:
@@ -746,10 +849,16 @@ def manage_pre_users():
 
         existing = PreUser.query.filter_by(name=name).first()
         if existing:
-            flash('Pre-user already exists.', 'danger')
+            flash('Pre-user already exists with that name.', 'danger')
             return redirect(url_for('main.manage_pre_users'))
 
-        new_pre_user = PreUser(name=name, department=department)
+        if email:
+            existing_email = PreUser.query.filter_by(email=email).first()
+            if existing_email:
+                flash('Pre-user already exists with that email.', 'danger')
+                return redirect(url_for('main.manage_pre_users'))
+
+        new_pre_user = PreUser(name=name, email=email, department=department)
         db.session.add(new_pre_user)
 
         log = Log(
@@ -765,15 +874,125 @@ def manage_pre_users():
         return redirect(url_for('main.manage_pre_users'))
 
     page = request.args.get('page', 1, type=int)
-    pre_users_pagination = PreUser.query.order_by(PreUser.name.asc()).paginate(page=page, per_page=50, error_out=False)
+    query = request.args.get('q', '').strip()
+    base_query = PreUser.query
+    if query:
+        like = f"%{query}%"
+        base_query = base_query.filter(
+            or_(
+                PreUser.name.ilike(like),
+                PreUser.email.ilike(like),
+                PreUser.department.ilike(like),
+            )
+        )
+
+    pre_users_pagination = base_query.order_by(PreUser.name.asc()).paginate(page=page, per_page=50, error_out=False)
     pre_users = pre_users_pagination.items
-    return render_template('pre_users.html', pre_users=pre_users, pre_users_pagination=pre_users_pagination)
+    return render_template(
+        'pre_users.html',
+        pre_users=pre_users,
+        pre_users_pagination=pre_users_pagination,
+        search_query=query
+    )
+
+
+@main.route('/pre_users/sync_azure', methods=['POST'])
+@login_required
+def sync_pre_users_from_azure():
+    if not current_user.is_super_admin:
+        flash('You do not have permission to sync pre-users.', 'danger')
+        return redirect(url_for('main.home'))
+
+    try:
+        access_token = _get_graph_access_token()
+        graph_users = _fetch_graph_member_users(access_token)
+
+        existing_by_email = {
+            pre_user.email.strip().lower(): pre_user
+            for pre_user in PreUser.query.filter(PreUser.email.isnot(None)).all()
+            if pre_user.email
+        }
+        existing_by_name = {
+            pre_user.name.strip().lower(): pre_user
+            for pre_user in PreUser.query.all()
+            if pre_user.name
+        }
+        existing_names = set(existing_by_name.keys())
+
+        added_count = 0
+        updated_count = 0
+        skipped_count = 0
+
+        for graph_user in graph_users:
+            name = (graph_user.get('displayName') or '').strip()
+            email = (graph_user.get('userPrincipalName') or '').strip().lower()
+            department = (graph_user.get('department') or '').strip() or None
+
+            if not name and not email:
+                skipped_count += 1
+                continue
+
+            if email and email in existing_by_email:
+                pre_user = existing_by_email[email]
+                if name and pre_user.name != name:
+                    pre_user.name = name
+                    updated_count += 1
+                if department is not None and pre_user.department != department:
+                    pre_user.department = department
+                    updated_count += 1
+                continue
+
+            # If email is new but a legacy record exists by name, attach email.
+            if name and name.lower() in existing_names and email:
+                pre_user = existing_by_name[name.lower()]
+                if not pre_user.email:
+                    pre_user.email = email
+                    updated_count += 1
+                if department is not None and pre_user.department != department:
+                    pre_user.department = department
+                    updated_count += 1
+                existing_by_email[email] = pre_user
+                continue
+
+            # Avoid duplicates when displayName already exists in DB (legacy constraint).
+            if name and name.lower() in existing_names:
+                skipped_count += 1
+                continue
+
+            new_pre_user = PreUser(name=name or email, email=email or None, department=department)
+            db.session.add(new_pre_user)
+            if name:
+                existing_names.add(name.lower())
+                existing_by_name[name.lower()] = new_pre_user
+            if email:
+                existing_by_email[email] = new_pre_user
+            added_count += 1
+
+        log = Log(
+            user_id=current_user.id,
+            action='Synced pre-users from Microsoft 365',
+            item_id=None,
+            changes=f'Added={added_count}, Updated={updated_count}, Skipped={skipped_count}'
+        )
+        db.session.add(log)
+        db.session.commit()
+
+        flash(
+            f'Sync complete. Added: {added_count}, Updated: {updated_count}, Skipped: {skipped_count}.',
+            'success'
+        )
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.exception('Error syncing pre-users from Microsoft 365')
+        flash('An error occurred while syncing pre-users from Microsoft 365.', 'danger')
+
+    return redirect(url_for('main.manage_pre_users'))
 
 
 @main.route('/pre_users/import', methods=['POST'])
 @login_required
 def import_pre_users():
-    if not current_user.can_add_users:
+    if not current_user.is_super_admin:
         flash('You do not have permission to import pre-users.', 'danger')
         return redirect(url_for('main.home'))
 
@@ -791,13 +1010,35 @@ def import_pre_users():
 
         start_index = 0
         header = [col.strip().lower() for col in rows[0]]
-        if 'name' in header or 'department' in header:
+        has_header = any(col in header for col in ['name', 'displayname', 'display_name', 'department', 'email', 'userprincipalname', 'upn'])
+        if has_header:
             start_index = 1
 
+        def _index_for(columns, *candidates):
+            for candidate in candidates:
+                if candidate in columns:
+                    return columns.index(candidate)
+            return None
+
+        if has_header:
+            name_idx = _index_for(header, 'name', 'displayname', 'display_name')
+            email_idx = _index_for(header, 'email', 'userprincipalname', 'upn')
+            dept_idx = _index_for(header, 'department')
+        else:
+            name_idx = 0
+            email_idx = 1 if len(rows[0]) >= 3 else None
+            dept_idx = 2 if len(rows[0]) >= 3 else 1
+
         existing_names = {
-            name for (name,) in db.session.query(PreUser.name).all()
+            name.lower() for (name,) in db.session.query(PreUser.name).all()
+            if name
+        }
+        existing_emails = {
+            email.lower() for (email,) in db.session.query(PreUser.email).all()
+            if email
         }
         seen_names = set()
+        seen_emails = set()
 
         added_count = 0
         skipped_existing = 0
@@ -808,19 +1049,28 @@ def import_pre_users():
                 skipped_invalid += 1
                 continue
 
-            name = (row[0] if len(row) > 0 else '').strip()
-            department = (row[1] if len(row) > 1 else '').strip() or None
+            name = (row[name_idx] if name_idx is not None and len(row) > name_idx else '').strip()
+            email = (row[email_idx] if email_idx is not None and len(row) > email_idx else '').strip().lower() or None
+            department = (
+                (row[dept_idx] if dept_idx is not None and len(row) > dept_idx else '').strip()
+                or None
+            )
 
             if not name:
                 skipped_invalid += 1
                 continue
 
-            if name in existing_names or name in seen_names:
+            if name.lower() in existing_names or name.lower() in seen_names:
+                skipped_existing += 1
+                continue
+            if email and (email in existing_emails or email in seen_emails):
                 skipped_existing += 1
                 continue
 
-            db.session.add(PreUser(name=name, department=department))
-            seen_names.add(name)
+            db.session.add(PreUser(name=name, email=email, department=department))
+            seen_names.add(name.lower())
+            if email:
+                seen_emails.add(email)
             added_count += 1
 
         log = Log(
@@ -851,7 +1101,7 @@ def import_pre_users():
 @main.route('/pre_users/delete/<int:pre_user_id>', methods=['POST'])
 @login_required
 def delete_pre_user(pre_user_id):
-    if not current_user.can_delete_users:
+    if not current_user.is_super_admin:
         flash('You do not have permission to perform this action.', 'danger')
         return redirect(url_for('main.home'))
 
@@ -910,7 +1160,11 @@ def assign_owner(item_id):
         changes=f'Asset {item.asset_tag} reassigned from {old_owner} to {pre_user.name}'
     )
     db.session.add(log)
+    real_session = db.session if hasattr(db.session, 'expire_on_commit') else db.session()
+    original_expire = real_session.expire_on_commit
+    real_session.expire_on_commit = False
     db.session.commit()
+    real_session.expire_on_commit = original_expire
 
     flash(f'{item.asset_tag} assigned to {pre_user.name}.', 'success')
     return redirect(url_for('main.home'))
@@ -1142,28 +1396,50 @@ def import_csv():
                 db.session.add(new_item)
                 imported_count += 1
 
+            real_session = db.session if hasattr(db.session, 'expire_on_commit') else db.session()
+            original_expire = real_session.expire_on_commit
+            real_session.expire_on_commit = False
             db.session.commit()
+            real_session.expire_on_commit = original_expire
 
-            # Log the import activity
-            log_entry = Log(
-                action="CSV Import",
-                item_id=None,
-                changes=f"Imported {imported_count} items",
-                user_id=current_user.id
-            )
-            db.session.add(log_entry)
-            db.session.commit()
+            # Log the import activity (non-blocking)
+            try:
+                log_entry = Log(
+                    action="CSV Import",
+                    item_id=None,
+                    changes=f"Imported {imported_count} items",
+                    user_id=current_user.id
+                )
+                db.session.add(log_entry)
+                real_session_log = db.session if hasattr(db.session, 'expire_on_commit') else db.session()
+                original_expire_log = real_session_log.expire_on_commit
+                real_session_log.expire_on_commit = False
+                db.session.commit()
+                real_session_log.expire_on_commit = original_expire_log
+            except Exception as log_error:
+                try:
+                    db.session.rollback()
+                except Exception:
+                    pass
+                current_app.logger.error(f'CSV import log failed: {log_error}')
+                flash('CSV imported, but logging failed.', 'warning')
 
             flash(f'CSV file imported successfully! {imported_count} items added.', 'success')
             return redirect(url_for('main.home'))
 
         except ValueError as e:
-            db.session.rollback()
+            try:
+                db.session.rollback()
+            except Exception:
+                pass
             current_app.logger.error(f'Error importing CSV file: {e}')
             flash(f'An error occurred while importing the file: {e}. Please check the date format and try again.', 'danger')
             return redirect(request.url)
         except Exception as e:
-            db.session.rollback()
+            try:
+                db.session.rollback()
+            except Exception:
+                pass
             current_app.logger.error(f'Error importing CSV file: {e}')
             flash('An unexpected error occurred while importing the file. Please check the format and try again.', 'danger')
             return redirect(request.url)
@@ -1635,7 +1911,7 @@ def delete_domain(domain_id):
 @main.route('/expenses', methods=['GET'])
 @login_required
 def expenses():
-    query = Expense.query
+    query = Expense.query.filter(Expense.is_void.is_(False))
 
     search_name = request.args.get('name', '').strip()
     invoice_month = request.args.get('invoice_month', type=int)
@@ -1682,6 +1958,36 @@ def expenses():
         budget_map=budget_map,
         all_years=all_years
     )
+
+
+@main.route('/expenses/voided', methods=['GET'])
+@login_required
+def voided_expenses():
+    query = Expense.query.filter(Expense.is_void.is_(True))
+
+    search_name = request.args.get('name', '').strip()
+    invoice_month = request.args.get('invoice_month', type=int)
+    invoice_year = request.args.get('invoice_year', type=int)
+    vendor = request.args.get('vendor', '').strip()
+    invoice_number = request.args.get('invoice_number', '').strip()
+    cleantech_entity = request.args.get('cleantech_entity', '').strip()
+
+    if search_name:
+        query = query.filter(Expense.name.ilike(f'%{search_name}%'))
+    if invoice_month:
+        query = query.filter(Expense.invoice_month == invoice_month)
+    if invoice_year:
+        query = query.filter(Expense.invoice_year == invoice_year)
+    if vendor:
+        query = query.filter(Expense.vendor.ilike(f'%{vendor}%'))
+    if invoice_number:
+        query = query.filter(Expense.invoice_number.ilike(f'%{invoice_number}%'))
+    if cleantech_entity:
+        query = query.filter(Expense.cleantech_entity.ilike(f'%{cleantech_entity}%'))
+
+    expenses_list = query.order_by(Expense.payment_date.desc(), Expense.created_at.desc()).all()
+
+    return render_template('void_expenses.html', expenses=expenses_list)
 
 
 @main.route('/expenses/export_csv', methods=['GET'])
