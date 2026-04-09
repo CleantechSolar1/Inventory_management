@@ -119,7 +119,8 @@ class User(db.Model, UserMixin):
 
 class PreUser(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(150), unique=True, nullable=False, index=True)
+    name = db.Column(db.String(150), nullable=False, index=True)
+    email = db.Column(db.String(255), unique=True, nullable=True, index=True)
     department = db.Column(db.String(100), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
