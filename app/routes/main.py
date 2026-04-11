@@ -440,17 +440,21 @@ def edit_item(item_id):
                 }
 
         try:
+            # Capture identifiers before commit to avoid loading expired attributes.
+            item_id = item.id
+            asset_tag = item.asset_tag
+            serial_number = item.serial_number
             db.session.commit()
             current_app.logger.info(
-                f'{current_user.username} updated item: {item.asset_tag} with serial number: {item.serial_number}'
+                f'{current_user.username} updated item: {asset_tag} with serial number: {serial_number}'
             )
             if changes:
                 try:
                     log = Log(
                         user_id=current_user.id,
                         action="Updated item",
-                        item_id=item.id,
-                        serial_number=item.serial_number,
+                        item_id=item_id,
+                        serial_number=serial_number,
                         changes=str(changes)
                     )
                     db.session.add(log)
