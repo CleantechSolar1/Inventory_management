@@ -1,4 +1,5 @@
 import io
+import os
 from io import StringIO
 import csv
 from decimal import Decimal, InvalidOperation
@@ -78,12 +79,19 @@ def log_user_activity(action, changes, item_id=None, serial_number=None):
 
 
 def _get_graph_access_token():
-    tenant_id = current_app.config.get('AZURE_TENANT_ID')
-    client_id = current_app.config.get('AZURE_CLIENT_ID')
-    client_secret = current_app.config.get('AZURE_CLIENT_SECRET')
+    tenant_id = (current_app.config.get('AZURE_TENANT_ID') or os.getenv('AZURE_TENANT_ID') or '').strip()
+    client_id = (current_app.config.get('AZURE_CLIENT_ID') or os.getenv('AZURE_CLIENT_ID') or '').strip()
+    client_secret = (current_app.config.get('AZURE_CLIENT_SECRET') or os.getenv('AZURE_CLIENT_SECRET') or '').strip()
 
-    if not tenant_id or not client_id or not client_secret:
-        raise ValueError('Azure credentials are not configured.')
+    missing = []
+    if not tenant_id:
+        missing.append('AZURE_TENANT_ID')
+    if not client_id:
+        missing.append('AZURE_CLIENT_ID')
+    if not client_secret:
+        missing.append('AZURE_CLIENT_SECRET')
+    if missing:
+        raise ValueError(f'Azure credentials are not configured: {", ".join(missing)}')
 
     token_url = f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
     data = {
@@ -439,11 +447,11 @@ def edit_item(item_id):
                     'new': _coerce_log_value(new_value)
                 }
 
+        # Capture identifiers before commit to avoid loading expired attributes.
+        item_id = item.id
+        asset_tag = item.asset_tag
+        serial_number = item.serial_number
         try:
-            # Capture identifiers before commit to avoid loading expired attributes.
-            item_id = item.id
-            asset_tag = item.asset_tag
-            serial_number = item.serial_number
             db.session.commit()
             current_app.logger.info(
                 f'{current_user.username} updated item: {asset_tag} with serial number: {serial_number}'
@@ -471,10 +479,10 @@ def edit_item(item_id):
                 db.session.rollback()
             except Exception:
                 current_app.logger.exception(
-                    f'Rollback failed after error updating item {item.id}.'
+                    f'Rollback failed after error updating item {item_id}.'
                 )
             current_app.logger.exception(
-                f'Error updating item {item.id} by {current_user.username}: {str(e)}'
+                f'Error updating item {item_id} by {current_user.username}: {str(e)}'
             )
             flash('An error occurred while updating the item. Please try again.', 'danger')
 
