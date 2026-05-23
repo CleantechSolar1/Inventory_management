@@ -291,11 +291,12 @@ def _ensure_expense_schema():
 def create_app():
     app = Flask(__name__)
     app.config.from_object('config.Config')
-    cookie_secure = _env_bool('COOKIE_SECURE', default=False)
+    cookie_secure = _env_bool('COOKIE_SECURE', default=_env_bool('VERCEL', default=False))
+    cookie_samesite = os.getenv('COOKIE_SAMESITE', 'Lax')
     app.config.update(
-        SESSION_COOKIE_SAMESITE="None",
+        SESSION_COOKIE_SAMESITE=cookie_samesite,
         SESSION_COOKIE_SECURE=cookie_secure,
-        REMEMBER_COOKIE_SAMESITE="None",
+        REMEMBER_COOKIE_SAMESITE=cookie_samesite,
         REMEMBER_COOKIE_SECURE=cookie_secure,
         WTF_CSRF_TIME_LIMIT=None,
     )
