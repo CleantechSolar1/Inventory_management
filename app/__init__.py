@@ -349,29 +349,36 @@ def create_app():
 
     print(app.url_map)
 
-    with app.app_context():
-        # Import models here to avoid circular import issues
-        from app.models import User
+    # Database/schema initialization can be expensive and may fail in serverless
+    # environments. Only run initialization when explicitly requested via
+    # the INITIALIZE_DB environment variable (set to '1' or 'true'). This
+    # prevents imports (e.g., by Vercel serverless functions) from performing
+    # migrations or filesystem operations at import time.
+    if _env_bool('INITIALIZE_DB', default=False):
+        with app.app_context():
+            # Import models here to avoid circular import issues
+            from app.models import User
 
-        # Create database tables
-        db.create_all()
-        _ensure_user_password_hash_size()
-        _ensure_user_role_column()
-        _ensure_user_mfa_columns()
-        _ensure_user_password_policy_columns()
-        _ensure_license_schema()
-        _ensure_expense_schema()
+            # Create database tables and ensure schema
+            db.create_all()
+            _ensure_user_password_hash_size()
+            _ensure_user_role_column()
+            _ensure_user_mfa_columns()
+            _ensure_user_password_policy_columns()
+            _ensure_license_schema()
+            _ensure_expense_schema()
 
-        # Create users if they don't exist
+            # Create users if they don't exist
+            if not User.query.filter_by(username='Admin').first():
+                Admin = User(username='Admin', role='full_control')
+                Admin.set_password(os.getenv('ADMIN_PASSWORD', 'Admin@123'))
+                Admin.must_change_password = False
+                Admin.password_changed_at = datetime.utcnow()
+                db.session.add(Admin)
 
-        if not User.query.filter_by(username='Admin').first():
-            Admin = User(username='Admin', role='full_control')
-            Admin.set_password(os.getenv('ADMIN_PASSWORD', 'Admin@123'))
-            Admin.must_change_password = False
-            Admin.password_changed_at = datetime.utcnow()
-            db.session.add(Admin)
-
-        db.session.commit()
+            db.session.commit()
+    else:
+        app.logger.info("Database initialization skipped (INITIALIZE_DB not set).")
 
     return app
 
