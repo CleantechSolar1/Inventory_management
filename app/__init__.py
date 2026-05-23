@@ -15,6 +15,13 @@ login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 
 
+def _env_bool(name, default=False):
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
 def _ensure_user_password_hash_size():
     if db.engine.dialect.name != 'mysql':
         return
@@ -284,11 +291,12 @@ def _ensure_expense_schema():
 def create_app():
     app = Flask(__name__)
     app.config.from_object('config.Config')
+    cookie_secure = _env_bool('COOKIE_SECURE', default=False)
     app.config.update(
         SESSION_COOKIE_SAMESITE="None",
-        SESSION_COOKIE_SECURE=True,
+        SESSION_COOKIE_SECURE=cookie_secure,
         REMEMBER_COOKIE_SAMESITE="None",
-        REMEMBER_COOKIE_SECURE=True,
+        REMEMBER_COOKIE_SECURE=cookie_secure,
         WTF_CSRF_TIME_LIMIT=None,
     )
     try:

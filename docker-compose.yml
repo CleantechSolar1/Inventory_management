@@ -1,0 +1,12 @@
+services:
+  web:
+    build: .
+    image: inventory-management-local
+    container_name: inventory-management-local
+    ports:
+      - "10000:10000"
+    environment:
+      PORT: "10000"
+      COOKIE_SECURE: "false"
+    volumes:
+      - ./instance:/app/instance
