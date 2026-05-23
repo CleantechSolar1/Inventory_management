@@ -1,2 +1,13 @@
 [tool.vercel]
 entrypoint = "run:app"
+
+[project]
+name = "inventory_management"
+version = "0.0.1"
+description = "Inventory management Flask app"
+readme = "README.md"
+requires-python = ">=3.8"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
