@@ -310,14 +310,43 @@ def create_app():
     migrate.init_app(app, db)
     login_manager.init_app(app)
 
-    # Set up logging
-    if not os.path.exists('app/logs'):
-        os.makedirs('app/logs')
-    handler = RotatingFileHandler('app/logs/inventory_app.log', maxBytes=10000, backupCount=1)
-    handler.setLevel(logging.INFO)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    app.logger.addHandler(handler)
+    # Set up logging. In serverless/read-only environments the repository
+    # path is not writable. Try multiple candidate locations for file logs
+    # (repo path, system temp). If none are writable, fall back to
+    # streaming logs to stdout so the platform can capture them.
+    try:
+        candidates = [
+            os.path.join(os.getcwd(), 'app', 'logs'),
+            os.path.join(os.getenv('TMPDIR', '/tmp'), 'app_logs'),
+        ]
+        handler = None
+        for log_dir in candidates:
+            try:
+                os.makedirs(log_dir, exist_ok=True)
+            except Exception:
+                # directory not writable; try next candidate
+                continue
+            log_path = os.path.join(log_dir, 'inventory_app.log')
+            try:
+                handler = RotatingFileHandler(log_path, maxBytes=10000, backupCount=1)
+                break
+            except Exception:
+                handler = None
+                continue
+
+        if handler is None:
+            # Fallback to stdout/stderr which is writable in serverless
+            app.logger.warning('File logging unavailable; using StreamHandler')
+            handler = logging.StreamHandler()
+
+        handler.setLevel(logging.INFO)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        app.logger.addHandler(handler)
+    except Exception as exc:
+        # As a last resort, configure basic logging to stdout
+        logging.basicConfig(level=logging.INFO)
+        app.logger.warning('Failed to configure logging handlers: %s', exc)
 
     # Import blueprints and register them
     from app.routes.auth import auth as auth_blueprint
